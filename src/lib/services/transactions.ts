@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { startOfMonth, endOfMonth, subDays, format, startOfDay, subMonths, startOfYear, endOfYear, subYears } from 'date-fns'
+import { startOfMonth, endOfMonth, subDays, format, startOfDay, subMonths, startOfYear, subYears, isAfter } from 'date-fns'
 
 export interface Transaction {
   id: string
@@ -75,17 +75,94 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     .reverse()
 }
 
-export async function getCategorySpendingForRange(supabase: SupabaseClient, startDate: string, endDate?: string) {
-  let query = supabase
-    .from('transactions')
-    .select('merchant, amount, category')
-    .gte('created_at', startDate)
+/**
+ * Optimised function to fetch all data for the trends page.
+ * We only fetch necessary columns to reduce bandwidth.
+ */
+export async function getAllTrendsData(supabase: SupabaseClient) {
+  const fiveYearsAgo = startOfYear(subYears(new Date(), 4))
+  const oneYearAgo = startOfMonth(subMonths(new Date(), 11))
+  const sevenDaysAgo = startOfDay(subDays(new Date(), 6))
 
-  if (endDate) {
-    query = query.lte('created_at', endDate)
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('created_at, amount, merchant, category, card')
+    .gte('created_at', fiveYearsAgo.toISOString())
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+
+  // Pre-process categories to avoid repeated logic
+  const transactions = (data as any[]).map(t => ({
+    ...t,
+    category: t.category || categorizeMerchant(t.merchant)
+  })) as Transaction[]
+
+  const aggregateCategories = (txs: Transaction[]) => {
+    const cats: Record<string, number> = {}
+    txs.forEach(t => {
+      cats[t.category] = (cats[t.category] || 0) + Number(t.amount)
+    })
+    return Object.entries(cats)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
   }
 
-  const { data, error } = await query
+  // Use raw Date objects for faster filtering
+  const sevenDaysAgoDate = new Date(sevenDaysAgo)
+  const oneYearAgoDate = new Date(oneYearAgo)
+
+  // 1. Weekly Data
+  const weeklyTxs = transactions.filter(t => new Date(t.created_at) >= sevenDaysAgoDate)
+  const weeklyTrends: Record<string, number> = {}
+  for (let i = 0; i < 7; i++) {
+    weeklyTrends[format(subDays(new Date(), i), 'MMM dd')] = 0
+  }
+  weeklyTxs.forEach(t => {
+    const d = format(new Date(t.created_at), 'MMM dd')
+    if (weeklyTrends[d] !== undefined) weeklyTrends[d] += Number(t.amount)
+  })
+
+  // 2. Monthly Data
+  const monthlyTxs = transactions.filter(t => new Date(t.created_at) >= oneYearAgoDate)
+  const monthlyTrends: Record<string, number> = {}
+  for (let i = 0; i < 12; i++) {
+    monthlyTrends[format(subMonths(new Date(), i), 'MMM yyyy')] = 0
+  }
+  monthlyTxs.forEach(t => {
+    const d = format(new Date(t.created_at), 'MMM yyyy')
+    if (monthlyTrends[d] !== undefined) monthlyTrends[d] += Number(t.amount)
+  })
+
+  // 3. Yearly Data (using full transaction list)
+  const yearlyTrends: Record<string, number> = {}
+  transactions.forEach(t => {
+    const d = format(new Date(t.created_at), 'yyyy')
+    yearlyTrends[d] = (yearlyTrends[d] || 0) + Number(t.amount)
+  })
+
+  return {
+    weekly: {
+      trends: Object.entries(weeklyTrends).map(([date, amount]) => ({ date, amount })).reverse(),
+      categories: aggregateCategories(weeklyTxs)
+    },
+    monthly: {
+      trends: Object.entries(monthlyTrends).map(([date, amount]) => ({ date, amount })).reverse(),
+      categories: aggregateCategories(monthlyTxs)
+    },
+    yearly: {
+      trends: Object.entries(yearlyTrends).map(([date, amount]) => ({ date, amount })),
+      categories: aggregateCategories(transactions)
+    }
+  }
+}
+
+export async function getSpendingByCategory(supabase: SupabaseClient) {
+  const start = startOfMonth(new Date()).toISOString()
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('merchant, amount, category')
+    .gte('created_at', start)
 
   if (error) throw error
 
@@ -98,97 +175,6 @@ export async function getCategorySpendingForRange(supabase: SupabaseClient, star
   return Object.entries(categories)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
-}
-
-export async function getWeeklySpending(supabase: SupabaseClient) {
-  const startDate = startOfDay(subDays(new Date(), 6)).toISOString()
-  const [trends, categories] = await Promise.all([
-    getDailySpending(supabase, 7),
-    getCategorySpendingForRange(supabase, startDate)
-  ])
-  return { trends, categories }
-}
-
-export async function getMonthlySpendingTrend(supabase: SupabaseClient) {
-  const startDate = startOfMonth(subMonths(new Date(), 11)).toISOString()
-  
-  const [categories, { data, error }] = await Promise.all([
-    getCategorySpendingForRange(supabase, startDate),
-    supabase
-      .from('transactions')
-      .select('created_at, amount')
-      .gte('created_at', startDate)
-      .order('created_at', { ascending: true })
-  ])
-
-  if (error) throw error
-
-  const groups: Record<string, number> = {}
-  for (let i = 0; i < 12; i++) {
-    const d = format(subMonths(new Date(), i), 'MMM yyyy')
-    groups[d] = 0
-  }
-
-  data.forEach((t) => {
-    const d = format(new Date(t.created_at), 'MMM yyyy')
-    if (groups[d] !== undefined) {
-      groups[d] += Number(t.amount)
-    }
-  })
-
-  const trends = Object.entries(groups)
-    .map(([date, amount]) => ({ date, amount }))
-    .reverse()
-
-  return { trends, categories }
-}
-
-export async function getYearlySpending(supabase: SupabaseClient) {
-  const startDate = startOfYear(subYears(new Date(), 4)).toISOString() // Last 5 years
-
-  const [categories, { data, error }] = await Promise.all([
-    getCategorySpendingForRange(supabase, startDate),
-    supabase
-      .from('transactions')
-      .select('created_at, amount')
-      .gte('created_at', startDate)
-      .order('created_at', { ascending: true })
-  ])
-
-  if (error) throw error
-
-  const groups: Record<string, number> = {}
-  data.forEach((t) => {
-    const d = format(new Date(t.created_at), 'yyyy')
-    groups[d] = (groups[d] || 0) + Number(t.amount)
-  })
-
-  const trends = Object.entries(groups)
-    .map(([date, amount]) => ({ date, amount }))
-
-  return { trends, categories }
-}
-
-export async function getSpendingByCategory(supabase: SupabaseClient) {
-  return getCategorySpendingForRange(supabase, startOfMonth(new Date()).toISOString())
-}
-
-export async function getTopMerchants(supabase: SupabaseClient, limit: number = 5) {
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('merchant, amount')
-
-  if (error) throw error
-
-  const merchants: Record<string, number> = {}
-  data.forEach((t) => {
-    merchants[t.merchant] = (merchants[t.merchant] || 0) + Number(t.amount)
-  })
-
-  return Object.entries(merchants)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, limit)
 }
 
 export async function getRecentTransactions(supabase: SupabaseClient, limit: number = 10) {
