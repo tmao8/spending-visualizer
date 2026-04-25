@@ -21,7 +21,7 @@ export default async function TrendsPage() {
   }
 
   // Fetch all trend data in parallel
-  const [weeklyData, monthlyData, yearlyData] = await Promise.all([
+  const [weekly, monthly, yearly] = await Promise.all([
     getWeeklySpending(supabase),
     getMonthlySpendingTrend(supabase),
     getYearlySpending(supabase),
@@ -43,9 +43,9 @@ export default async function TrendsPage() {
 
       <main className="max-w-7xl mx-auto px-6 mt-12">
         <TrendsView 
-          weeklyData={weeklyData}
-          monthlyData={monthlyData}
-          yearlyData={yearlyData}
+          weekly={weekly}
+          monthly={monthly}
+          yearly={yearly}
         />
       </main>
     </div>
