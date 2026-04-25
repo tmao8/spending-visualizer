@@ -1,11 +1,14 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { getAllTrendsData } from '@/lib/services/transactions'
+import { 
+  getWeeklySpending, 
+  getMonthlySpendingTrend, 
+  getYearlySpending 
+} from '@/lib/services/transactions'
 import { TrendsView } from '@/components/dashboard/TrendsView'
 import { ChevronLeft } from 'lucide-react'
 import { Suspense } from 'react'
-import TrendsLoading from './loading'
 
 async function TrendsContent() {
   const supabase = await createClient()
@@ -18,19 +21,27 @@ async function TrendsContent() {
     return redirect('/login')
   }
 
-  // Optimized parallel fetching
-  const trends = await getAllTrendsData(supabase)
+  // Fetch trend data in parallel - smaller queries resolve faster
+  const [weekly, monthly, yearly] = await Promise.all([
+    getWeeklySpending(supabase),
+    getMonthlySpendingTrend(supabase),
+    getYearlySpending(supabase),
+  ])
 
   return (
     <TrendsView 
-      weekly={trends.weekly}
-      monthly={trends.monthly}
-      yearly={trends.yearly}
+      weekly={weekly}
+      monthly={monthly}
+      yearly={yearly}
     />
   )
 }
 
-export default async function TrendsPage() {
+/**
+ * Non-async component ensures the page shell and header are sent to the 
+ * browser immediately, allowing for an instant transition.
+ */
+export default function TrendsPage() {
   return (
     <div className="min-h-screen bg-white pb-20">
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
@@ -46,7 +57,7 @@ export default async function TrendsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 mt-12">
-        <Suspense fallback={<TrendsLoadingContent />}>
+        <Suspense fallback={<TrendsLoadingSkeleton />}>
           <TrendsContent />
         </Suspense>
       </main>
@@ -54,13 +65,13 @@ export default async function TrendsPage() {
   )
 }
 
-function TrendsLoadingContent() {
+function TrendsLoadingSkeleton() {
   return (
     <div className="space-y-12">
-      <div className="flex items-center justify-center p-1 bg-gray-100 rounded-2xl w-fit mx-auto animate-pulse">
-        <div className="w-24 h-8 bg-gray-200 rounded-xl mx-1" />
+      <div className="flex items-center justify-center p-1 bg-gray-100 rounded-2xl w-fit mx-auto">
+        <div className="w-24 h-8 bg-gray-200 rounded-xl mx-1 animate-pulse" />
         <div className="w-24 h-8 bg-white rounded-xl mx-1 shadow-sm" />
-        <div className="w-24 h-8 bg-gray-200 rounded-xl mx-1" />
+        <div className="w-24 h-8 bg-gray-200 rounded-xl mx-1 animate-pulse" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
