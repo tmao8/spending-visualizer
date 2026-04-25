@@ -7,6 +7,28 @@ export interface Transaction {
   merchant: string
   amount: number
   card: string
+  category: string
+}
+
+const CATEGORY_MAP: Record<string, string> = {
+  'starbucks': 'Food & Drink',
+  'mcdonald': 'Food & Drink',
+  'uber': 'Transportation',
+  'lyft': 'Transportation',
+  'amazon': 'Shopping',
+  'target': 'Shopping',
+  'walmart': 'Shopping',
+  'apple': 'Services',
+  'netflix': 'Services',
+  'spotify': 'Services',
+}
+
+export function categorizeMerchant(merchant: string): string {
+  const normalized = merchant.toLowerCase()
+  for (const [key, value] of Object.entries(CATEGORY_MAP)) {
+    if (normalized.includes(key)) return value
+  }
+  return 'General'
 }
 
 export async function getMonthlyTotal(supabase: SupabaseClient) {
@@ -56,6 +78,24 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     .reverse()
 }
 
+export async function getSpendingByCategory(supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('merchant, amount')
+
+  if (error) throw error
+
+  const categories: Record<string, number> = {}
+  data.forEach((t) => {
+    const cat = categorizeMerchant(t.merchant)
+    categories[cat] = (categories[cat] || 0) + Number(t.amount)
+  })
+
+  return Object.entries(categories)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+}
+
 export async function getTopMerchants(supabase: SupabaseClient, limit: number = 5) {
   const { data, error } = await supabase
     .from('transactions')
@@ -82,5 +122,9 @@ export async function getRecentTransactions(supabase: SupabaseClient, limit: num
     .limit(limit)
 
   if (error) throw error
-  return data as Transaction[]
+  
+  return (data as any[]).map(t => ({
+    ...t,
+    category: categorizeMerchant(t.merchant)
+  })) as Transaction[]
 }

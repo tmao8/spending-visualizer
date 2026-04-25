@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Spending Visualizer",
-  description: "Visualize your Apple Pay spending",
+  title: "Clarity",
+  description: "Insightful spending, elegantly visualized.",
 };
 
 export default function RootLayout({
