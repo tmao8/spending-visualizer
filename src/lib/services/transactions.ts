@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { startOfMonth, endOfMonth, subDays, format, startOfDay } from 'date-fns'
+import { startOfMonth, endOfMonth, subDays, format, startOfDay, subMonths, startOfYear, endOfYear, getYear } from 'date-fns'
 
 export interface Transaction {
   id: string
@@ -76,6 +76,59 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
   return Object.entries(groups)
     .map(([date, amount]) => ({ date, amount }))
     .reverse()
+}
+
+export async function getWeeklySpending(supabase: SupabaseClient) {
+  return getDailySpending(supabase, 7)
+}
+
+export async function getMonthlySpendingTrend(supabase: SupabaseClient) {
+  const startDate = startOfMonth(subMonths(new Date(), 11)).toISOString()
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('created_at, amount')
+    .gte('created_at', startDate)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+
+  const groups: Record<string, number> = {}
+  
+  for (let i = 0; i < 12; i++) {
+    const d = format(subMonths(new Date(), i), 'MMM yyyy')
+    groups[d] = 0
+  }
+
+  data.forEach((t) => {
+    const d = format(new Date(t.created_at), 'MMM yyyy')
+    if (groups[d] !== undefined) {
+      groups[d] += Number(t.amount)
+    }
+  })
+
+  return Object.entries(groups)
+    .map(([date, amount]) => ({ date, amount }))
+    .reverse()
+}
+
+export async function getYearlySpending(supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('created_at, amount')
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+
+  const groups: Record<string, number> = {}
+  
+  data.forEach((t) => {
+    const d = format(new Date(t.created_at), 'yyyy')
+    groups[d] = (groups[d] || 0) + Number(t.amount)
+  })
+
+  return Object.entries(groups)
+    .map(([date, amount]) => ({ date, amount }))
 }
 
 export async function getSpendingByCategory(supabase: SupabaseClient) {
