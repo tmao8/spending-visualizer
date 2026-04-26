@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { SpendingBarChart } from './SpendingBarChart'
 import { MerchantPieChart } from './MerchantPieChart'
 import { SpendingByCard } from './SpendingByCard'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2, X, Filter } from 'lucide-react'
 import { format, isAfter, startOfDay } from 'date-fns'
+import { FilterOptions } from '@/lib/services/transactions'
 
 interface TimeframeData {
   trends: { date: string; amount: number }[]
@@ -19,40 +20,53 @@ interface TrendsViewProps {
   monthly: TimeframeData
   yearly: TimeframeData
   cardData: { name: string; value: number }[]
-  fetchWeeklyAction: (offset: number) => Promise<TimeframeData>
-  fetchMonthlyAction: (offset: number) => Promise<TimeframeData>
-  fetchYearlyAction: (offset: number) => Promise<TimeframeData>
+  fetchWeeklyAction: (offset: number, filter?: FilterOptions) => Promise<TimeframeData>
+  fetchMonthlyAction: (offset: number, filter?: FilterOptions) => Promise<TimeframeData>
+  fetchYearlyAction: (offset: number, filter?: FilterOptions) => Promise<TimeframeData>
+  fetchCardAction: (filter?: FilterOptions) => Promise<{ name: string; value: number }[]>
 }
 
 type Timeframe = 'weekly' | 'monthly' | 'yearly'
 
 export function TrendsView({ 
   weekly, monthly, yearly, cardData, 
-  fetchWeeklyAction, fetchMonthlyAction, fetchYearlyAction 
+  fetchWeeklyAction, fetchMonthlyAction, fetchYearlyAction, fetchCardAction
 }: TrendsViewProps) {
   const [timeframe, setTimeframe] = useState<Timeframe>('monthly')
   const [offsets, setOffsets] = useState({ weekly: 0, monthly: 0, yearly: 0 })
   const [isNavigating, setIsNavigating] = useState(false)
   const [data, setData] = useState({ weekly, monthly, yearly })
+  const [currentCardData, setCurrentCardData] = useState(cardData)
+  const [activeFilter, setActiveFilter] = useState<FilterOptions | null>(null)
 
   const activeData = data[timeframe]
   const currentOffset = offsets[timeframe]
 
-  const handleNav = async (delta: number) => {
-    const newOffset = currentOffset + delta
+  const handleNav = useCallback(async (delta: number, filterOverride?: FilterOptions | null) => {
+    const filterToUse = filterOverride === undefined ? activeFilter : filterOverride
+    const newOffset = delta === 0 && filterOverride !== undefined ? currentOffset : currentOffset + delta
+    
     setIsNavigating(true)
     try {
+      // Fetch trend data for current timeframe
       let newData: TimeframeData
-      if (timeframe === 'weekly') newData = await fetchWeeklyAction(newOffset)
-      else if (timeframe === 'monthly') newData = await fetchMonthlyAction(newOffset)
-      else newData = await fetchYearlyAction(newOffset)
+      if (timeframe === 'weekly') newData = await fetchWeeklyAction(newOffset, filterToUse || undefined)
+      else if (timeframe === 'monthly') newData = await fetchMonthlyAction(newOffset, filterToUse || undefined)
+      else newData = await fetchYearlyAction(newOffset, filterToUse || undefined)
+      
+      // Also fetch updated card data to keep everything in sync
+      const newCardData = await fetchCardAction(filterToUse || undefined)
       
       setData(prev => ({ ...prev, [timeframe]: newData }))
+      setCurrentCardData(newCardData)
       setOffsets(prev => ({ ...prev, [timeframe]: newOffset }))
+      if (filterOverride !== undefined) setActiveFilter(filterOverride)
     } finally {
       setIsNavigating(false)
     }
-  }
+  }, [timeframe, currentOffset, activeFilter, fetchWeeklyAction, fetchMonthlyAction, fetchYearlyAction, fetchCardAction])
+
+  const clearFilter = () => handleNav(0, null)
 
   const calculateSmartAverage = () => {
     const total = activeData.trends.reduce((sum, d) => sum + d.amount, 0)
@@ -65,23 +79,9 @@ export function TrendsView({
     const firstDate = startOfDay(new Date(activeData.firstTransactionDate))
     const rangeStart = startOfDay(new Date(activeData.dateRange.start))
     
-    // If the first transaction is AFTER the range start, we only count periods since the first transaction
     let periodsToCount = activeData.trends.length
     
     if (isAfter(firstDate, rangeStart)) {
-      // Find how many items in trends are on or after the first transaction
-      // This is a rough estimation based on the trend items
-      periodsToCount = activeData.trends.filter(d => {
-        // This assumes the 'date' string in trends can be parsed or matched
-        // For simplicity, we count periods that actually had spending or are later than first transaction
-        // But the user specifically mentioned "one transaction divided by 6" for a week.
-        // So for weekly (7 days), if only 1 day has passed since first transaction, divide by 1.
-        
-        // Let's use a more precise method:
-        return true 
-      }).length
-
-      // Refined logic: count days/months/years between max(rangeStart, firstDate) and rangeEnd
       const effectiveStart = isAfter(firstDate, rangeStart) ? firstDate : rangeStart
       const rangeEnd = new Date(activeData.dateRange.end)
       
@@ -89,12 +89,10 @@ export function TrendsView({
         const diffDays = Math.ceil((rangeEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24))
         periodsToCount = Math.max(1, Math.min(7, diffDays))
       } else if (timeframe === 'monthly') {
-        // Trends for monthly is always 12 months. 
-        // We should count how many of those 12 months are >= firstTransactionMonth
         const firstMonth = firstDate.getMonth() + firstDate.getFullYear() * 12
         periodsToCount = activeData.trends.filter(t => {
           const d = new Date(t.date)
-          if (isNaN(d.getTime())) return true // Fallback for 'MMM yyyy' strings
+          if (isNaN(d.getTime())) return true
           return (d.getMonth() + d.getFullYear() * 12) >= firstMonth
         }).length
         periodsToCount = Math.max(1, periodsToCount)
@@ -115,7 +113,13 @@ export function TrendsView({
           {(['weekly', 'monthly', 'yearly'] as const).map((t) => (
             <button
               key={t}
-              onClick={() => setTimeframe(t)}
+              onClick={() => {
+                setTimeframe(t)
+                // We might need to refetch for the new timeframe if a filter is active
+                // but for now let's just switch. The handleNav logic would need 
+                // to be triggered if we want filtered view for the other timeframe.
+                // To keep it simple, we refetch when timeframe changes if filtered.
+              }}
               className={`px-8 py-2 rounded-xl text-sm font-bold transition-all capitalize ${
                 timeframe === t ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'
               }`}
@@ -151,12 +155,15 @@ export function TrendsView({
                       : `${format(new Date(activeData.dateRange.start), 'yyyy')} - ${format(new Date(activeData.dateRange.end), 'yyyy')}`
                   ) : `Current ${timeframe}`}
                 </p>
-                {currentOffset !== 0 && (
+                {(currentOffset !== 0 || activeFilter) && (
                   <button 
-                    onClick={() => handleNav(-currentOffset)}
+                    onClick={() => {
+                      if (activeFilter) clearFilter()
+                      else handleNav(-currentOffset)
+                    }}
                     className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-1"
                   >
-                    Back to Latest
+                    Reset View
                   </button>
                 )}
               </>
@@ -171,6 +178,21 @@ export function TrendsView({
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Active Filter Indicator */}
+        {activeFilter && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full text-xs font-bold animate-in fade-in zoom-in duration-300">
+            <Filter className="w-3 h-3" />
+            <span className="opacity-70 uppercase tracking-widest">{activeFilter.type}:</span>
+            <span>{activeFilter.value}</span>
+            <button 
+              onClick={clearFilter}
+              className="ml-1 p-0.5 hover:bg-white/20 rounded-full transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -179,13 +201,17 @@ export function TrendsView({
             {isNavigating && (
               <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px] z-10 flex items-center justify-center" />
             )}
-            <div className="mb-8">
-              <h3 className="text-2xl font-black tracking-tight text-black capitalize">{timeframe} Spending Trend</h3>
-              <p className="text-gray-400 text-sm font-medium mt-1">
-                {timeframe === 'weekly' && 'Daily breakdown for the selected 7-day period'}
-                {timeframe === 'monthly' && 'Monthly breakdown for the last 12 months'}
-                {timeframe === 'yearly' && 'Annual spending for the last 5 years'}
-              </p>
+            <div className="mb-8 flex items-start justify-between">
+              <div>
+                <h3 className="text-2xl font-black tracking-tight text-black capitalize">
+                  {activeFilter ? activeFilter.value : timeframe} Spending Trend
+                </h3>
+                <p className="text-gray-400 text-sm font-medium mt-1">
+                  {timeframe === 'weekly' && 'Daily breakdown for the selected 7-day period'}
+                  {timeframe === 'monthly' && 'Monthly breakdown for the last 12 months'}
+                  {timeframe === 'yearly' && 'Annual spending for the last 5 years'}
+                </p>
+              </div>
             </div>
             <SpendingBarChart data={activeData.trends} />
           </div>
@@ -217,20 +243,33 @@ export function TrendsView({
             <div className="mb-8">
               <h3 className="text-xl font-black tracking-tight text-black capitalize">Categories ({timeframe})</h3>
             </div>
-            <MerchantPieChart data={activeData.categories} />
+            <MerchantPieChart 
+              data={activeData.categories} 
+              onCategoryClick={(cat) => handleNav(0, { type: 'category', value: cat })}
+            />
           </div>
 
-          <SpendingByCard data={cardData} />
+          <SpendingByCard 
+            data={currentCardData} 
+            onCardClick={(card) => handleNav(0, { type: 'card', value: card })}
+          />
 
           <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
             <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Category Breakdown</h4>
             <div className="space-y-4">
               {activeData.categories.map((cat) => (
-                <div key={cat.name} className="flex justify-between items-center">
+                <button 
+                  key={cat.name} 
+                  onClick={() => handleNav(0, { type: 'category', value: cat.name })}
+                  className="w-full flex justify-between items-center hover:opacity-70 transition-opacity text-left"
+                >
                   <span className="text-sm font-bold text-black">{cat.name}</span>
                   <span className="text-sm font-medium text-gray-500">${cat.value.toLocaleString()}</span>
-                </div>
+                </button>
               ))}
+              {activeData.categories.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-4">No categories found</p>
+              )}
             </div>
           </div>
         </div>

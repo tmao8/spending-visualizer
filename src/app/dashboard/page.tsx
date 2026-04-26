@@ -9,7 +9,8 @@ import {
   getDailySpending, 
   getRecentTransactions,
   getSpendingByCategory,
-  getSpendingByCard
+  getSpendingByCard,
+  getHistoricalMonthlyAverage
 } from '@/lib/services/transactions'
 import { SpendingBarChart } from '@/components/dashboard/SpendingBarChart'
 import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
@@ -30,12 +31,13 @@ export default async function DashboardPage() {
   }
 
   // Fetch data in parallel
-  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending] = await Promise.all([
+  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage] = await Promise.all([
     getMonthlyTotal(supabase),
     getDailySpending(supabase),
     getSpendingByCategory(supabase),
     getRecentTransactions(supabase),
     getSpendingByCard(supabase),
+    getHistoricalMonthlyAverage(supabase),
   ])
 
   return (
@@ -118,7 +120,10 @@ export default async function DashboardPage() {
             <section className="bg-black rounded-3xl p-8 text-white">
               <h3 className="text-lg font-bold mb-2">Smart Insight</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                You've spent {((monthlyTotal / 2000) * 100).toFixed(0)}% of your typical monthly average. Keep tracking to see your full financial picture.
+                {historicalAverage 
+                  ? `You've spent ${((monthlyTotal / historicalAverage) * 100).toFixed(0)}% of your typical monthly average ($${historicalAverage.toLocaleString(undefined, { maximumFractionDigits: 0 })}).`
+                  : "You're in your first month of tracking! Keep adding transactions to see how your spending compares to your future monthly average."
+                }
               </p>
             </section>
           </div>

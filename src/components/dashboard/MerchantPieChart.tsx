@@ -11,11 +11,12 @@ import {
 
 interface MerchantPieChartProps {
   data: { name: string; value: number }[]
+  onCategoryClick?: (category: string) => void
 }
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
-export function MerchantPieChart({ data }: MerchantPieChartProps) {
+export function MerchantPieChart({ data, onCategoryClick }: MerchantPieChartProps) {
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -28,6 +29,8 @@ export function MerchantPieChart({ data }: MerchantPieChartProps) {
             outerRadius={80}
             paddingAngle={5}
             dataKey="value"
+            onClick={(entry) => onCategoryClick?.(entry.name)}
+            className="cursor-pointer focus:outline-none"
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

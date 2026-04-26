@@ -8,25 +8,32 @@ import {
   getWeeklySpending, 
   getMonthlySpendingTrend, 
   getYearlySpending,
-  getSpendingByCard
+  getSpendingByCard,
+  FilterOptions
 } from '@/lib/services/transactions'
 
-export async function fetchWeeklyData(offset: number) {
+export async function fetchWeeklyData(offset: number, filter?: FilterOptions) {
   'use server'
   const supabase = await createClient()
-  return getWeeklySpending(supabase, offset)
+  return getWeeklySpending(supabase, offset, filter)
 }
 
-export async function fetchMonthlyData(offset: number) {
+export async function fetchMonthlyData(offset: number, filter?: FilterOptions) {
   'use server'
   const supabase = await createClient()
-  return getMonthlySpendingTrend(supabase, offset)
+  return getMonthlySpendingTrend(supabase, offset, filter)
 }
 
-export async function fetchYearlyData(offset: number) {
+export async function fetchYearlyData(offset: number, filter?: FilterOptions) {
   'use server'
   const supabase = await createClient()
-  return getYearlySpending(supabase, offset)
+  return getYearlySpending(supabase, offset, filter)
+}
+
+export async function fetchCardData(filter?: FilterOptions) {
+  'use server'
+  const supabase = await createClient()
+  return getSpendingByCard(supabase, filter)
 }
 
 import { TrendsView } from '@/components/dashboard/TrendsView'
@@ -61,6 +68,7 @@ async function TrendsContent() {
       fetchWeeklyAction={fetchWeeklyData}
       fetchMonthlyAction={fetchMonthlyData}
       fetchYearlyAction={fetchYearlyData}
+      fetchCardAction={fetchCardData}
     />
   )
 }
