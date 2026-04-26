@@ -69,7 +69,8 @@ export function MerchantPieChart({ data, onCategoryClick }: MerchantPieChartProp
             ))}
           </Pie>
           <Tooltip 
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+            itemStyle={{ color: '#000', fontWeight: 'bold' }}
             formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Spent']}
           />
           <Legend verticalAlign="bottom" height={36}/>
