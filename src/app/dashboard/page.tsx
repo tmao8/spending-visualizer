@@ -16,6 +16,7 @@ import { SpendingBarChart } from '@/components/dashboard/SpendingBarChart'
 import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
+import { TransactionModal } from '@/components/dashboard/TransactionModal'
 import { LogOut, ArrowUpRight } from 'lucide-react'
 import { signOut } from '../login/actions'
 
@@ -47,6 +48,7 @@ export default async function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight text-black">Clarity</h1>
           <div className="flex items-center gap-6">
+            <TransactionModal cards={cardSpending.map(c => c.name)} />
             <Link 
               href="/dashboard/trends" 
               className="text-sm font-semibold text-gray-500 hover:text-black transition-colors flex items-center gap-1"

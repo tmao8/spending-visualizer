@@ -21,6 +21,14 @@ serve(async (req) => {
     const merchant = record.merchant;
     const recordId = record.id;
 
+    // If the category is already set (e.g., manual entry), skip it
+    if (record.category) {
+      return new Response(JSON.stringify({ success: true, message: "Category already set, skipping" }), {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // 3. Ask Gemini to categorize the merchant
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const prompt = `Categorize the merchant '${merchant}'. Choose strictly from this list: [${CATEGORIES.join(", ")}]. Respond with ONLY the exact category name, nothing else.`;

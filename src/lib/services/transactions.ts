@@ -15,6 +15,11 @@ export interface FilterOptions {
   category?: string
 }
 
+export const STATIC_CATEGORIES = [
+  "Groceries", "Food & Drinks", "Travel", "Entertainment", 
+  "Shopping", "Transportation", "Services", "Health", "Other"
+] as const
+
 const CATEGORY_MAP: Record<string, string> = {
   'starbucks': 'Food & Drink',
   'mcdonald': 'Food & Drink',
@@ -308,4 +313,15 @@ export async function getRecentTransactions(supabase: SupabaseClient, limit: num
     ...t,
     category: t.category || categorizeMerchant(t.merchant)
   })) as Transaction[]
+}
+
+export async function addTransaction(supabase: SupabaseClient, transaction: Omit<Transaction, 'id' | 'created_at'> & { created_at?: string }) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert([transaction])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as Transaction
 }

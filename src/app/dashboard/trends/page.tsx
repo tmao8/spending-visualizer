@@ -13,6 +13,7 @@ import {
 } from '@/lib/services/transactions'
 
 import { TrendsView } from '@/components/dashboard/TrendsView'
+import { TransactionModal } from '@/components/dashboard/TransactionModal'
 import { ChevronLeft } from 'lucide-react'
 import { Suspense } from 'react'
 
@@ -46,12 +47,31 @@ async function TrendsContent({ searchParams }: { searchParams: Promise<any> }) {
   ])
 
   return (
-    <TrendsView 
-      weekly={weekly}
-      monthly={monthly}
-      yearly={yearly}
-      cardData={cardData}
-    />
+    <>
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/dashboard" 
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:text-black transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Link>
+            <h1 className="text-2xl font-bold tracking-tight text-black">Spending Trends</h1>
+          </div>
+          <TransactionModal cards={cardData.map(c => c.name)} />
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 mt-12">
+        <TrendsView 
+          weekly={weekly}
+          monthly={monthly}
+          yearly={yearly}
+          cardData={cardData}
+        />
+      </main>
+    </>
   )
 }
 
@@ -62,23 +82,9 @@ interface PageProps {
 export default function TrendsPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-white pb-20">
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-4">
-          <Link 
-            href="/dashboard" 
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:text-black transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="text-2xl font-bold tracking-tight text-black">Spending Trends</h1>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 mt-12">
-        <Suspense fallback={<TrendsLoadingSkeleton />}>
-          <TrendsContent searchParams={searchParams} />
-        </Suspense>
-      </main>
+      <Suspense fallback={<TrendsLoadingSkeleton />}>
+        <TrendsContent searchParams={searchParams} />
+      </Suspense>
     </div>
   )
 }
