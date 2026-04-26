@@ -20,14 +20,14 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
       {transactions.map((t) => {
         const Icon = ICON_MAP[t.category] || CreditCard
         return (
-          <div key={t.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+          <div key={t.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0 group cursor-default">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
-                <Icon className="w-5 h-5 text-gray-400" />
+              <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
+                <Icon className="w-5 h-5 text-gray-400 group-hover:text-black transition-colors" />
               </div>
               <div>
                 <p className="text-sm font-bold text-black">{t.merchant}</p>
-                <p className="text-[12px] text-gray-400 font-medium">
+                <p className="text-[12px] text-gray-400 font-medium group-hover:text-black transition-colors">
                   {format(new Date(t.created_at), 'EEEE, MMM dd')} • {t.category}
                 </p>
               </div>
@@ -36,7 +36,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
               <p className="text-sm font-bold text-black">
                 ${Number(t.amount).toFixed(2)}
               </p>
-              <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
+              <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase group-hover:text-black transition-colors">
                 {t.card}
               </p>
             </div>

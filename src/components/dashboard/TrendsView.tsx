@@ -272,10 +272,10 @@ export function TrendsView({
                 <button 
                   key={cat.name} 
                   onClick={() => handleFilter('category', cat.name)}
-                  className="w-full flex justify-between items-center hover:opacity-70 transition-opacity text-left"
+                  className="w-full flex justify-between items-center group text-left"
                 >
-                  <span className="text-sm font-bold text-black">{cat.name}</span>
-                  <span className="text-sm font-medium text-gray-500">${cat.value.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-black group-hover:opacity-70 transition-opacity">{cat.name}</span>
+                  <span className="text-sm font-medium text-gray-500 group-hover:text-black transition-colors">${cat.value.toLocaleString()}</span>
                 </button>
               ))}
               {activeData.categories.length === 0 && (
