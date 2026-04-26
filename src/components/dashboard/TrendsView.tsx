@@ -92,13 +92,13 @@ export function TrendsView({
         const diffDays = Math.ceil((rangeEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24))
         periodsToCount = Math.max(1, Math.min(7, diffDays))
       } else if (timeframe === 'monthly') {
-        const firstMonth = firstDate.getMonth() + firstDate.getFullYear() * 12
-        periodsToCount = activeData.trends.filter(t => {
-          const d = new Date(t.date)
-          if (isNaN(d.getTime())) return true
-          return (d.getMonth() + d.getFullYear() * 12) >= firstMonth
-        }).length
-        periodsToCount = Math.max(1, periodsToCount)
+        const startMonth = effectiveStart.getMonth() + effectiveStart.getFullYear() * 12
+        const endMonth = rangeEnd.getMonth() + rangeEnd.getFullYear() * 12
+        periodsToCount = Math.max(1, Math.min(12, (endMonth - startMonth) + 1))
+      } else if (timeframe === 'yearly') {
+        const startYear = effectiveStart.getFullYear()
+        const endYear = rangeEnd.getFullYear()
+        periodsToCount = Math.max(1, Math.min(5, (endYear - startYear) + 1))
       }
     }
 
