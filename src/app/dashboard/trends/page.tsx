@@ -12,35 +12,12 @@ import {
   FilterOptions
 } from '@/lib/services/transactions'
 
-export async function fetchWeeklyData(offset: number, filter?: FilterOptions) {
-  'use server'
-  const supabase = await createClient()
-  return getWeeklySpending(supabase, offset, filter)
-}
-
-export async function fetchMonthlyData(offset: number, filter?: FilterOptions) {
-  'use server'
-  const supabase = await createClient()
-  return getMonthlySpendingTrend(supabase, offset, filter)
-}
-
-export async function fetchYearlyData(offset: number, filter?: FilterOptions) {
-  'use server'
-  const supabase = await createClient()
-  return getYearlySpending(supabase, offset, filter)
-}
-
-export async function fetchCardData(filter?: FilterOptions) {
-  'use server'
-  const supabase = await createClient()
-  return getSpendingByCard(supabase, filter)
-}
-
 import { TrendsView } from '@/components/dashboard/TrendsView'
 import { ChevronLeft } from 'lucide-react'
 import { Suspense } from 'react'
 
-async function TrendsContent() {
+async function TrendsContent({ searchParams }: { searchParams: Promise<any> }) {
+  const params = await searchParams
   const supabase = await createClient()
   
   const {
@@ -51,12 +28,21 @@ async function TrendsContent() {
     return redirect('/login')
   }
 
-  // Fetch trend data in parallel
+  const weekOffset = Number(params.weekOffset || 0)
+  const monthOffset = Number(params.monthOffset || 0)
+  const yearOffset = Number(params.yearOffset || 0)
+  
+  const filter: FilterOptions = {
+    card: params.card || undefined,
+    category: params.category || undefined
+  }
+
+  // Fetch trend data in parallel based on filters
   const [weekly, monthly, yearly, cardData] = await Promise.all([
-    getWeeklySpending(supabase),
-    getMonthlySpendingTrend(supabase),
-    getYearlySpending(supabase),
-    getSpendingByCard(supabase),
+    getWeeklySpending(supabase, weekOffset, filter),
+    getMonthlySpendingTrend(supabase, monthOffset, filter),
+    getYearlySpending(supabase, yearOffset, filter),
+    getSpendingByCard(supabase, filter),
   ])
 
   return (
@@ -65,19 +51,15 @@ async function TrendsContent() {
       monthly={monthly}
       yearly={yearly}
       cardData={cardData}
-      fetchWeeklyAction={fetchWeeklyData}
-      fetchMonthlyAction={fetchMonthlyData}
-      fetchYearlyAction={fetchYearlyData}
-      fetchCardAction={fetchCardData}
     />
   )
 }
 
-/**
- * Non-async component ensures the page shell and header are sent to the 
- * browser immediately, allowing for an instant transition.
- */
-export default function TrendsPage() {
+interface PageProps {
+  searchParams: Promise<any>
+}
+
+export default function TrendsPage({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-white pb-20">
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
@@ -94,7 +76,7 @@ export default function TrendsPage() {
 
       <main className="max-w-7xl mx-auto px-6 mt-12">
         <Suspense fallback={<TrendsLoadingSkeleton />}>
-          <TrendsContent />
+          <TrendsContent searchParams={searchParams} />
         </Suspense>
       </main>
     </div>

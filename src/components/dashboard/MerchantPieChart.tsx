@@ -9,15 +9,45 @@ import {
   Legend,
 } from 'recharts'
 
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
 interface MerchantPieChartProps {
   data: { name: string; value: number }[]
   onCategoryClick?: (category: string) => void
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+const CATEGORY_COLORS: Record<string, string> = {
+  'Groceries': '#10b981',      // Green
+  'Food & Drink': '#f59e0b',   // Amber
+  'Transportation': '#3b82f6', // Blue
+  'Shopping': '#ef4444',       // Red
+  'Entertainment': '#8b5cf6',  // Purple
+  'Services': '#06b6d4',       // Cyan
+  'Health': '#ec4899',         // Pink
+  'Travel': '#f97316',         // Orange
+  'Other': '#64748b',          // Slate
+  'General': '#94a3b8',        // Gray
+}
+
+const DEFAULT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
 export function MerchantPieChart({ data, onCategoryClick }: MerchantPieChartProps) {
-  return (
+  const router = useRouter()
+
+  const handleSliceClick = (entry: any) => {
+    if (onCategoryClick) {
+      onCategoryClick(entry.name)
+    } else {
+      router.push(`/dashboard/trends?category=${encodeURIComponent(entry.name)}`)
+    }
+  }
+
+  const getColor = (name: string, index: number) => {
+    return CATEGORY_COLORS[name] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]
+  }
+
+  const content = (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
@@ -27,13 +57,14 @@ export function MerchantPieChart({ data, onCategoryClick }: MerchantPieChartProp
             cy="50%"
             innerRadius={60}
             outerRadius={80}
-            paddingAngle={5}
+            paddingAngle={data.length === 1 ? 0 : 5}
             dataKey="value"
-            onClick={(entry) => onCategoryClick?.(entry.name)}
+            onClick={handleSliceClick}
             className="cursor-pointer focus:outline-none"
+            stroke="none"
           >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell key={`cell-${index}`} fill={getColor(entry.name, index)} />
             ))}
           </Pie>
           <Tooltip 
@@ -44,5 +75,13 @@ export function MerchantPieChart({ data, onCategoryClick }: MerchantPieChartProp
         </PieChart>
       </ResponsiveContainer>
     </div>
+  )
+
+  if (onCategoryClick) return content
+
+  return (
+    <Link href="/dashboard/trends" className="block hover:opacity-80 transition-opacity">
+      {content}
+    </Link>
   )
 }

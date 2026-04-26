@@ -11,8 +11,8 @@ export interface Transaction {
 }
 
 export interface FilterOptions {
-  type: 'card' | 'category'
-  value: string
+  card?: string
+  category?: string
 }
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -41,8 +41,8 @@ export async function getSpendingByCard(supabase: SupabaseClient, filter?: Filte
     .from('transactions')
     .select('card, amount, category, merchant')
 
-  if (filter?.type === 'card') {
-    query = query.eq('card', filter.value)
+  if (filter?.card) {
+    query = query.eq('card', filter.card)
   }
 
   const { data, error } = await query
@@ -50,8 +50,8 @@ export async function getSpendingByCard(supabase: SupabaseClient, filter?: Filte
   if (error) throw error
 
   let filteredData = data
-  if (filter?.type === 'category') {
-    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.value)
+  if (filter?.category) {
+    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
   }
 
   const cards: Record<string, number> = {}
@@ -90,8 +90,8 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     .lte('created_at', endDate)
     .order('created_at', { ascending: true })
 
-  if (filter?.type === 'card') {
-    query = query.eq('card', filter.value)
+  if (filter?.card) {
+    query = query.eq('card', filter.card)
   }
 
   const { data, error } = await query
@@ -99,26 +99,26 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
   if (error) throw error
 
   let filteredData = data
-  if (filter?.type === 'category') {
-    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.value)
+  if (filter?.category) {
+    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
   }
 
-  const groups: Record<string, number> = {}
+  const groups: Record<string, any> = {}
   for (let i = 0; i < days; i++) {
     const d = format(subDays(baseDate, i), 'MMM dd')
-    groups[d] = 0
+    groups[d] = { date: d, amount: 0 }
   }
 
   filteredData.forEach((t) => {
     const d = format(new Date(t.created_at), 'MMM dd')
     if (groups[d] !== undefined) {
-      groups[d] += Number(t.amount)
+      const cat = t.category || categorizeMerchant(t.merchant)
+      groups[d].amount += Number(t.amount)
+      groups[d][cat] = (groups[d][cat] || 0) + Number(t.amount)
     }
   })
 
-  return Object.entries(groups)
-    .map(([date, amount]) => ({ date, amount }))
-    .reverse()
+  return Object.values(groups).reverse()
 }
 
 export async function getCategorySpendingForRange(supabase: SupabaseClient, startDate: string, endDate?: string, filter?: FilterOptions) {
@@ -131,8 +131,8 @@ export async function getCategorySpendingForRange(supabase: SupabaseClient, star
     query = query.lte('created_at', endDate)
   }
 
-  if (filter?.type === 'card') {
-    query = query.eq('card', filter.value)
+  if (filter?.card) {
+    query = query.eq('card', filter.card)
   }
 
   const { data, error } = await query
@@ -140,8 +140,8 @@ export async function getCategorySpendingForRange(supabase: SupabaseClient, star
   if (error) throw error
 
   let filteredData = data
-  if (filter?.type === 'category') {
-    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.value)
+  if (filter?.category) {
+    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
   }
 
   const categories: Record<string, number> = {}
@@ -192,8 +192,8 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
     .lte('created_at', endDate)
     .order('created_at', { ascending: true })
 
-  if (filter?.type === 'card') {
-    query = query.eq('card', filter.value)
+  if (filter?.card) {
+    query = query.eq('card', filter.card)
   }
 
   const [categories, { data, error }, firstDate] = await Promise.all([
@@ -205,26 +205,26 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
   if (error) throw error
 
   let filteredData = data
-  if (filter?.type === 'category') {
-    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.value)
+  if (filter?.category) {
+    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
   }
 
-  const groups: Record<string, number> = {}
+  const groups: Record<string, any> = {}
   for (let i = 0; i < 12; i++) {
     const d = format(subMonths(baseDate, i), 'MMM yyyy')
-    groups[d] = 0
+    groups[d] = { date: d, amount: 0 }
   }
 
   filteredData.forEach((t) => {
     const d = format(new Date(t.created_at), 'MMM yyyy')
     if (groups[d] !== undefined) {
-      groups[d] += Number(t.amount)
+      const cat = t.category || categorizeMerchant(t.merchant)
+      groups[d].amount += Number(t.amount)
+      groups[d][cat] = (groups[d][cat] || 0) + Number(t.amount)
     }
   })
 
-  const trends = Object.entries(groups)
-    .map(([date, amount]) => ({ date, amount }))
-    .reverse()
+  const trends = Object.values(groups).reverse()
 
   return { trends, categories, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
@@ -241,8 +241,8 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
     .lte('created_at', endDate)
     .order('created_at', { ascending: true })
 
-  if (filter?.type === 'card') {
-    query = query.eq('card', filter.value)
+  if (filter?.card) {
+    query = query.eq('card', filter.card)
   }
 
   const [categories, { data, error }, firstDate] = await Promise.all([
@@ -254,18 +254,20 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
   if (error) throw error
 
   let filteredData = data
-  if (filter?.type === 'category') {
-    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.value)
+  if (filter?.category) {
+    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
   }
 
-  const groups: Record<string, number> = {}
+  const groups: Record<string, any> = {}
   filteredData.forEach((t) => {
     const d = format(new Date(t.created_at), 'yyyy')
-    groups[d] = (groups[d] || 0) + Number(t.amount)
+    if (!groups[d]) groups[d] = { date: d, amount: 0 }
+    const cat = t.category || categorizeMerchant(t.merchant)
+    groups[d].amount += Number(t.amount)
+    groups[d][cat] = (groups[d][cat] || 0) + Number(t.amount)
   })
 
-  const trends = Object.entries(groups)
-    .map(([date, amount]) => ({ date, amount }))
+  const trends = Object.values(groups)
 
   return { trends, categories, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
