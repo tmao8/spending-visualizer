@@ -20,6 +20,7 @@ interface MerchantPieChartProps {
 const CATEGORY_COLORS: Record<string, string> = {
   'Groceries': '#10b981',      // Green
   'Food & Drink': '#f59e0b',   // Amber
+  'Food & Drinks': '#f59e0b',  // Amber (match edge function)
   'Transportation': '#3b82f6', // Blue
   'Shopping': '#ef4444',       // Red
   'Entertainment': '#8b5cf6',  // Purple
