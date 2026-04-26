@@ -1,11 +1,34 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
+
 import { 
   getWeeklySpending, 
   getMonthlySpendingTrend, 
-  getYearlySpending 
+  getYearlySpending,
+  getSpendingByCard
 } from '@/lib/services/transactions'
+
+export async function fetchWeeklyData(offset: number) {
+  'use server'
+  const supabase = await createClient()
+  return getWeeklySpending(supabase, offset)
+}
+
+export async function fetchMonthlyData(offset: number) {
+  'use server'
+  const supabase = await createClient()
+  return getMonthlySpendingTrend(supabase, offset)
+}
+
+export async function fetchYearlyData(offset: number) {
+  'use server'
+  const supabase = await createClient()
+  return getYearlySpending(supabase, offset)
+}
+
 import { TrendsView } from '@/components/dashboard/TrendsView'
 import { ChevronLeft } from 'lucide-react'
 import { Suspense } from 'react'
@@ -21,11 +44,12 @@ async function TrendsContent() {
     return redirect('/login')
   }
 
-  // Fetch trend data in parallel - smaller queries resolve faster
-  const [weekly, monthly, yearly] = await Promise.all([
+  // Fetch trend data in parallel
+  const [weekly, monthly, yearly, cardData] = await Promise.all([
     getWeeklySpending(supabase),
     getMonthlySpendingTrend(supabase),
     getYearlySpending(supabase),
+    getSpendingByCard(supabase),
   ])
 
   return (
@@ -33,6 +57,10 @@ async function TrendsContent() {
       weekly={weekly}
       monthly={monthly}
       yearly={yearly}
+      cardData={cardData}
+      fetchWeeklyAction={fetchWeeklyData}
+      fetchMonthlyAction={fetchMonthlyData}
+      fetchYearlyAction={fetchYearlyData}
     />
   )
 }

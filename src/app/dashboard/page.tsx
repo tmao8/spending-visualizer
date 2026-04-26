@@ -1,15 +1,20 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
+
 import { 
   getMonthlyTotal, 
   getDailySpending, 
   getRecentTransactions,
-  getSpendingByCategory
+  getSpendingByCategory,
+  getSpendingByCard
 } from '@/lib/services/transactions'
 import { SpendingBarChart } from '@/components/dashboard/SpendingBarChart'
 import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
+import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
 import { LogOut, ArrowUpRight } from 'lucide-react'
 import { signOut } from '../login/actions'
 
@@ -25,11 +30,12 @@ export default async function DashboardPage() {
   }
 
   // Fetch data in parallel
-  const [monthlyTotal, dailySpending, categorySpending, recentTransactions] = await Promise.all([
+  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending] = await Promise.all([
     getMonthlyTotal(supabase),
     getDailySpending(supabase),
     getSpendingByCategory(supabase),
     getRecentTransactions(supabase),
+    getSpendingByCard(supabase),
   ])
 
   return (
@@ -105,6 +111,8 @@ export default async function DashboardPage() {
                 <MerchantPieChart data={categorySpending} />
               </div>
             </section>
+
+            <SpendingByCard data={cardSpending} />
             
             {/* Quick Insights or other desktop elements can go here */}
             <section className="bg-black rounded-3xl p-8 text-white">

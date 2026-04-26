@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { startOfMonth, endOfMonth, subDays, format, startOfDay, subMonths, startOfYear, subYears } from 'date-fns'
+import { startOfMonth, endOfMonth, subDays, format, startOfDay, endOfDay, subMonths, startOfYear, endOfYear, subYears } from 'date-fns'
 
 export interface Transaction {
   id: string
@@ -31,35 +31,54 @@ export function categorizeMerchant(merchant: string): string {
   return 'General'
 }
 
+export async function getSpendingByCard(supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('card, amount')
+
+  if (error) throw error
+
+  const cards: Record<string, number> = {}
+  data.forEach((t) => {
+    const cardName = t.card || 'Unknown'
+    cards[cardName] = (cards[cardName] || 0) + Number(t.amount)
+  })
+
+  return Object.entries(cards)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+}
+
 export async function getMonthlyTotal(supabase: SupabaseClient) {
-  const start = startOfMonth(new Date()).toISOString()
-  const end = endOfMonth(new Date()).toISOString()
+  const start = startOfDay(startOfMonth(new Date())).toISOString()
 
   const { data, error } = await supabase
     .from('transactions')
     .select('amount')
     .gte('created_at', start)
-    .lte('created_at', end)
 
   if (error) throw error
 
   return data.reduce((sum, t) => sum + Number(t.amount), 0)
 }
 
-export async function getDailySpending(supabase: SupabaseClient, days: number = 30) {
-  const startDate = startOfDay(subDays(new Date(), days - 1)).toISOString()
+export async function getDailySpending(supabase: SupabaseClient, days: number = 30, weekOffset: number = 0) {
+  const baseDate = subDays(new Date(), weekOffset * 7)
+  const startDate = startOfDay(subDays(baseDate, days - 1)).toISOString()
+  const endDate = endOfDay(baseDate).toISOString()
 
   const { data, error } = await supabase
     .from('transactions')
     .select('created_at, amount')
     .gte('created_at', startDate)
+    .lte('created_at', endDate)
     .order('created_at', { ascending: true })
 
   if (error) throw error
 
   const groups: Record<string, number> = {}
   for (let i = 0; i < days; i++) {
-    const d = format(subDays(new Date(), i), 'MMM dd')
+    const d = format(subDays(baseDate, i), 'MMM dd')
     groups[d] = 0
   }
 
@@ -100,32 +119,52 @@ export async function getCategorySpendingForRange(supabase: SupabaseClient, star
     .sort((a, b) => b.value - a.value)
 }
 
-export async function getWeeklySpending(supabase: SupabaseClient) {
-  const startDate = startOfDay(subDays(new Date(), 6)).toISOString()
-  const [trends, categories] = await Promise.all([
-    getDailySpending(supabase, 7),
-    getCategorySpendingForRange(supabase, startDate)
-  ])
-  return { trends, categories }
+export async function getFirstTransactionDate(supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('created_at')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single()
+
+  if (error && error.code !== 'PGRST116') throw error
+  return data?.created_at ? new Date(data.created_at) : new Date()
 }
 
-export async function getMonthlySpendingTrend(supabase: SupabaseClient) {
-  const startDate = startOfMonth(subMonths(new Date(), 11)).toISOString()
+export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: number = 0) {
+  const baseDate = subDays(new Date(), weekOffset * 7)
+  const startDate = startOfDay(subDays(baseDate, 6)).toISOString()
+  const endDate = endOfDay(baseDate).toISOString()
   
-  const [categories, { data, error }] = await Promise.all([
-    getCategorySpendingForRange(supabase, startDate),
+  const [trends, categories, firstDate] = await Promise.all([
+    getDailySpending(supabase, 7, weekOffset),
+    getCategorySpendingForRange(supabase, startDate, endDate),
+    getFirstTransactionDate(supabase)
+  ])
+  return { trends, categories, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
+}
+
+export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOffset: number = 0) {
+  const baseDate = subMonths(new Date(), monthOffset * 12)
+  const startDate = startOfMonth(subMonths(baseDate, 11)).toISOString()
+  const endDate = endOfMonth(baseDate).toISOString()
+  
+  const [categories, { data, error }, firstDate] = await Promise.all([
+    getCategorySpendingForRange(supabase, startDate, endDate),
     supabase
       .from('transactions')
       .select('created_at, amount')
       .gte('created_at', startDate)
-      .order('created_at', { ascending: true })
+      .lte('created_at', endDate)
+      .order('created_at', { ascending: true }),
+    getFirstTransactionDate(supabase)
   ])
 
   if (error) throw error
 
   const groups: Record<string, number> = {}
   for (let i = 0; i < 12; i++) {
-    const d = format(subMonths(new Date(), i), 'MMM yyyy')
+    const d = format(subMonths(baseDate, i), 'MMM yyyy')
     groups[d] = 0
   }
 
@@ -140,19 +179,23 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient) {
     .map(([date, amount]) => ({ date, amount }))
     .reverse()
 
-  return { trends, categories }
+  return { trends, categories, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
-export async function getYearlySpending(supabase: SupabaseClient) {
-  const startDate = startOfYear(subYears(new Date(), 4)).toISOString()
+export async function getYearlySpending(supabase: SupabaseClient, yearOffset: number = 0) {
+  const baseDate = subYears(new Date(), yearOffset * 5)
+  const startDate = startOfYear(subYears(baseDate, 4)).toISOString()
+  const endDate = endOfYear(baseDate).toISOString()
 
-  const [categories, { data, error }] = await Promise.all([
-    getCategorySpendingForRange(supabase, startDate),
+  const [categories, { data, error }, firstDate] = await Promise.all([
+    getCategorySpendingForRange(supabase, startDate, endDate),
     supabase
       .from('transactions')
       .select('created_at, amount')
       .gte('created_at', startDate)
-      .order('created_at', { ascending: true })
+      .lte('created_at', endDate)
+      .order('created_at', { ascending: true }),
+    getFirstTransactionDate(supabase)
   ])
 
   if (error) throw error
@@ -166,7 +209,7 @@ export async function getYearlySpending(supabase: SupabaseClient) {
   const trends = Object.entries(groups)
     .map(([date, amount]) => ({ date, amount }))
 
-  return { trends, categories }
+  return { trends, categories, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
 export async function getSpendingByCategory(supabase: SupabaseClient) {
