@@ -95,7 +95,7 @@ export function SpendingBarChart({ data }: SpendingBarChartProps) {
               key={cat}
               dataKey={cat} 
               stackId="a" 
-              fill={CATEGORY_COLORS[cat] || '#e5e7eb'} 
+              fill={CATEGORY_COLORS[cat] || 'transparent'} 
               radius={[0, 0, 0, 0]}
             />
           ))}
