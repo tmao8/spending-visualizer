@@ -275,8 +275,9 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
     const startGroupDate = daysInMonth[i]
     const endGroupDate = daysInMonth[Math.min(i + groupDays - 1, daysInMonth.length - 1)]
     const label = `${format(startGroupDate, 'd')}-${format(endGroupDate, 'd')}`
+    const fullDate = `${format(startGroupDate, 'MMM d')} - ${format(endGroupDate, 'MMM d, yyyy')}`
     
-    const groupData: any = { date: label, amount: 0 }
+    const groupData: any = { date: label, fullDate, amount: 0 }
     
     const groupDaysSlice = daysInMonth.slice(i, i + groupDays).map(d => format(d, 'yyyy-MM-dd'))
 
