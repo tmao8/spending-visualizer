@@ -1,15 +1,14 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SpendingBarChart } from './SpendingBarChart'
 import { MerchantPieChart } from './MerchantPieChart'
 import { SpendingByCard } from './SpendingByCard'
 import { RecentTransactions } from './RecentTransactions'
-import { Transaction } from '@/lib/services/transactions'
+import { Transaction, FilterOptions } from '@/lib/services/transactions'
 import { ChevronLeft, ChevronRight, Loader2, X, Filter } from 'lucide-react'
 import { format, isAfter, startOfDay } from 'date-fns'
-import { FilterOptions } from '@/lib/services/transactions'
 
 interface TimeframeData {
   trends: { date: string; amount: number }[]
@@ -47,6 +46,30 @@ export function TrendsView({
 
   const activeData = timeframe === 'weekly' ? weekly : timeframe === 'monthly' ? monthly : yearly
   const currentOffset = timeframe === 'weekly' ? weekOffset : timeframe === 'monthly' ? monthOffset : yearOffset
+
+  // Effect to self-correct timezone differences on initial load
+  useEffect(() => {
+    // Only run on initial load for the default view (no offsets)
+    if (currentOffset !== 0 || !activeData.dateRange) return
+
+    const clientNow = new Date()
+    const serverDate = new Date(activeData.dateRange.start)
+
+    let needsCorrection = false
+    if (timeframe === 'monthly' && clientNow.getMonth() !== serverDate.getMonth()) {
+      needsCorrection = true
+    } else if (timeframe === 'yearly' && clientNow.getFullYear() !== serverDate.getFullYear()) {
+      needsCorrection = true
+    }
+
+    // If the client's date is ahead of the server's (e.g., May 1st vs Apr 30th),
+    // the server rendered the previous period. We need to navigate "forward" in time.
+    if (needsCorrection && clientNow > serverDate) {
+      console.log('Timezone skew detected. Correcting view...')
+      handleNav(-1) // Navigate forward one period
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Run only once on mount
 
   const updateParams = (newParams: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -134,7 +157,7 @@ export function TrendsView({
 
           <button 
             onClick={() => handleNav(-1)}
-            disabled={isPending || currentOffset === 0}
+            disabled={isPending}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-black hover:bg-gray-100 transition-all disabled:opacity-50"
           >
             <ChevronRight className="w-5 h-5" />
