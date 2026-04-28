@@ -114,10 +114,10 @@ export function TrendsView({
                 <p className="text-sm font-bold text-black">
                   {activeData.dateRange ? (
                     timeframe === 'weekly' 
-                      ? `${format(new Date(activeData.dateRange.start), 'MMM dd')} - ${format(new Date(activeData.dateRange.end), 'MMM dd, yyyy')}`
+                      ? `${format(new Date(activeData.dateRange.start.substring(0, 10) + 'T12:00:00'), 'MMM dd')} - ${format(new Date(activeData.dateRange.end.substring(0, 10) + 'T12:00:00'), 'MMM dd, yyyy')}`
                       : timeframe === 'monthly'
-                      ? format(new Date(activeData.dateRange.start), 'MMMM yyyy')
-                      : format(new Date(activeData.dateRange.start), 'yyyy')
+                      ? format(new Date(activeData.dateRange.start.substring(0, 10) + 'T12:00:00'), 'MMMM yyyy')
+                      : format(new Date(activeData.dateRange.start.substring(0, 10) + 'T12:00:00'), 'yyyy')
                   ) : `Current ${timeframe}`}
                 </p>
                 {(currentOffset !== 0 || filter.card || filter.category) && (
