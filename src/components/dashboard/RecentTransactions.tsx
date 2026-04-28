@@ -28,7 +28,13 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
               <div>
                 <p className="text-sm font-bold text-black">{t.merchant}</p>
                 <p className="text-[12px] text-gray-400 font-medium group-hover:text-black transition-colors">
-                  {format(new Date(t.created_at), 'EEEE, MMM dd')} • {t.category}
+                  {(() => {
+                    const date = new Date(t.created_at)
+                    return format(
+                      new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()), 
+                      'EEEE, MMM dd'
+                    )
+                  })()} • {t.category}
                 </p>
               </div>
             </div>

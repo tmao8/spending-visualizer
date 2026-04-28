@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { SpendingBarChart } from './SpendingBarChart'
 import { MerchantPieChart } from './MerchantPieChart'
 import { SpendingByCard } from './SpendingByCard'
+import { RecentTransactions } from './RecentTransactions'
+import { Transaction } from '@/lib/services/transactions'
 import { ChevronLeft, ChevronRight, Loader2, X, Filter } from 'lucide-react'
 import { format, isAfter, startOfDay } from 'date-fns'
 import { FilterOptions } from '@/lib/services/transactions'
@@ -12,6 +14,7 @@ import { FilterOptions } from '@/lib/services/transactions'
 interface TimeframeData {
   trends: { date: string; amount: number }[]
   categories: { name: string; value: number }[]
+  transactions: Transaction[]
   dateRange?: { start: string; end: string }
   firstTransactionDate?: string
 }
@@ -70,43 +73,8 @@ export function TrendsView({
       router.push('/dashboard/trends')
     })
   }
-
-  const calculateSmartAverage = () => {
-    const total = activeData.trends.reduce((sum, d) => sum + d.amount, 0)
-    if (total === 0) return 0
-
-    if (!activeData.firstTransactionDate || !activeData.dateRange) {
-      return total / (activeData.trends.length || 1)
-    }
-
-    const firstDate = startOfDay(new Date(activeData.firstTransactionDate))
-    const rangeStart = startOfDay(new Date(activeData.dateRange.start))
-    
-    let periodsToCount = activeData.trends.length
-    
-    if (isAfter(firstDate, rangeStart)) {
-      const effectiveStart = isAfter(firstDate, rangeStart) ? firstDate : rangeStart
-      const rangeEnd = new Date(activeData.dateRange.end)
-      
-      if (timeframe === 'weekly') {
-        const diffDays = Math.ceil((rangeEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24))
-        periodsToCount = Math.max(1, Math.min(7, diffDays))
-      } else if (timeframe === 'monthly') {
-        const startMonth = effectiveStart.getMonth() + effectiveStart.getFullYear() * 12
-        const endMonth = rangeEnd.getMonth() + rangeEnd.getFullYear() * 12
-        periodsToCount = Math.max(1, Math.min(12, (endMonth - startMonth) + 1))
-      } else if (timeframe === 'yearly') {
-        const startYear = effectiveStart.getFullYear()
-        const endYear = rangeEnd.getFullYear()
-        periodsToCount = Math.max(1, Math.min(5, (endYear - startYear) + 1))
-      }
-    }
-
-    return total / periodsToCount
-  }
-
+  
   const totalPeriodSpend = activeData.trends.reduce((sum, d) => sum + d.amount, 0)
-  const averageSpend = calculateSmartAverage()
 
   return (
     <div className="space-y-12">
@@ -118,7 +86,7 @@ export function TrendsView({
               key={t}
               onClick={() => updateParams({ timeframe: t })}
               className={`px-8 py-2 rounded-xl text-sm font-bold transition-all capitalize ${
-                timeframe === t ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                timeframe === t ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'
               }`}
             >
               {t}
@@ -148,8 +116,8 @@ export function TrendsView({
                     timeframe === 'weekly' 
                       ? `${format(new Date(activeData.dateRange.start), 'MMM dd')} - ${format(new Date(activeData.dateRange.end), 'MMM dd, yyyy')}`
                       : timeframe === 'monthly'
-                      ? `${format(new Date(activeData.dateRange.start), 'MMMM yyyy')} - ${format(new Date(activeData.dateRange.end), 'MMMM yyyy')}`
-                      : `${format(new Date(activeData.dateRange.start), 'yyyy')} - ${format(new Date(activeData.dateRange.end), 'yyyy')}`
+                      ? format(new Date(activeData.dateRange.start), 'MMMM yyyy')
+                      : format(new Date(activeData.dateRange.start), 'yyyy')
                   ) : `Current ${timeframe}`}
                 </p>
                 {(currentOffset !== 0 || filter.card || filter.category) && (
@@ -218,22 +186,16 @@ export function TrendsView({
                   {filter.category || filter.card || timeframe} Spending Trend
                 </h3>
                 <p className="text-gray-400 text-sm font-medium mt-1">
-                  {timeframe === 'weekly' && 'Daily breakdown for the selected 7-day period'}
-                  {timeframe === 'monthly' && 'Monthly breakdown for the last 12 months'}
-                  {timeframe === 'yearly' && 'Annual spending for the last 5 years'}
+                  {timeframe === 'weekly' && 'Daily breakdown for the selected week'}
+                  {timeframe === 'monthly' && 'Weekly breakdown for the selected month'}
+                  {timeframe === 'yearly' && 'Monthly breakdown for the selected year'}
                 </p>
               </div>
             </div>
             <SpendingBarChart data={activeData.trends} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Average {timeframe.replace('ly', '')}</p>
-              <p className="text-2xl font-black text-black">
-                ${averageSpend.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Peak {timeframe.replace('ly', '')}</p>
               <p className="text-2xl font-black text-black">
@@ -246,6 +208,13 @@ export function TrendsView({
                 ${totalPeriodSpend.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
+          </div>
+          
+          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-gray-100">
+              <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Transactions in Period</h4>
+            </div>
+            <RecentTransactions transactions={activeData.transactions} />
           </div>
         </div>
 

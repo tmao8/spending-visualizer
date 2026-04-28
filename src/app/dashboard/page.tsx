@@ -34,7 +34,7 @@ export default async function DashboardPage() {
   // Fetch data in parallel
   const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage] = await Promise.all([
     getMonthlyTotal(supabase),
-    getDailySpending(supabase),
+    getDailySpending(supabase, 30, 0, undefined, 5, 'day'),
     getSpendingByCategory(supabase),
     getRecentTransactions(supabase),
     getSpendingByCard(supabase),

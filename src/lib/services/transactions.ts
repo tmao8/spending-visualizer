@@ -1,5 +1,26 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { startOfMonth, endOfMonth, subDays, format, startOfDay, endOfDay, subMonths, startOfYear, endOfYear, subYears } from 'date-fns'
+import { 
+  startOfMonth, 
+  endOfMonth, 
+  subDays, 
+  format, 
+  startOfDay, 
+  endOfDay, 
+  subMonths, 
+  startOfYear, 
+  endOfYear, 
+  subYears,
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  startOfWeek,
+  endOfWeek,
+  subWeeks
+} from 'date-fns'
+
+// Helper to get YYYY-MM-DD from a potentially UTC string without timezone shifting
+function getCalendarDay(dateStr: string) {
+  return dateStr.substring(0, 10)
+}
 
 export interface Transaction {
   id: string
@@ -83,10 +104,13 @@ export async function getMonthlyTotal(supabase: SupabaseClient) {
   return data.reduce((sum, t) => sum + Number(t.amount), 0)
 }
 
-export async function getDailySpending(supabase: SupabaseClient, days: number = 30, weekOffset: number = 0, filter?: FilterOptions) {
-  const baseDate = subDays(new Date(), weekOffset * 7)
-  const startDate = startOfDay(subDays(baseDate, days - 1)).toISOString()
-  const endDate = endOfDay(baseDate).toISOString()
+export async function getDailySpending(supabase: SupabaseClient, days: number = 30, weekOffset: number = 0, filter?: FilterOptions, groupDays: number = 1, alignment: 'day' | 'week' = 'day') {
+  const baseDate = alignment === 'week' ? subWeeks(new Date(), weekOffset) : subDays(new Date(), weekOffset * 7)
+  const startDateObj = alignment === 'week' ? startOfWeek(baseDate, { weekStartsOn: 1 }) : subDays(baseDate, days - 1)
+  const endDateObj = alignment === 'week' ? endOfWeek(baseDate, { weekStartsOn: 1 }) : baseDate
+  
+  const startDate = startOfDay(startDateObj).toISOString()
+  const endDate = endOfDay(endDateObj).toISOString()
 
   let query = supabase
     .from('transactions')
@@ -108,22 +132,46 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
   }
 
-  const groups: Record<string, any> = {}
-  for (let i = 0; i < days; i++) {
-    const d = format(subDays(baseDate, i), 'MMM dd')
-    groups[d] = { date: d, amount: 0 }
+  const groups: any[] = []
+  
+  if (groupDays === 1) {
+    const dateInterval = eachDayOfInterval({ start: startDateObj, end: endDateObj })
+    dateInterval.forEach(date => {
+      const dayStr = format(date, 'yyyy-MM-dd')
+      const label = alignment === 'week' ? format(date, 'eee') : format(date, 'MMM dd')
+      
+      const dayData: any = { date: label, amount: 0 }
+      filteredData.forEach(t => {
+        if (getCalendarDay(t.created_at) === dayStr) {
+          const cat = t.category || categorizeMerchant(t.merchant)
+          dayData.amount += Number(t.amount)
+          dayData[cat] = (dayData[cat] || 0) + Number(t.amount)
+        }
+      })
+      groups.push(dayData)
+    })
+  } else {
+    // Grouped view (e.g. 5-day increments for Home)
+    for (let i = 0; i < days; i += groupDays) {
+      const endGroupDate = subDays(baseDate, i)
+      const startGroupDate = subDays(endGroupDate, groupDays - 1)
+      const label = `${format(startGroupDate, 'MMM dd')} - ${format(endGroupDate, 'dd')}`
+      
+      const groupData: any = { date: label, amount: 0 }
+      
+      filteredData.forEach(t => {
+        const tDate = new Date(getCalendarDay(t.created_at) + 'T00:00:00') // Treat as local time
+        if (tDate >= startOfDay(startGroupDate) && tDate <= endOfDay(endGroupDate)) {
+          const cat = t.category || categorizeMerchant(t.merchant)
+          groupData.amount += Number(t.amount)
+          groupData[cat] = (groupData[cat] || 0) + Number(t.amount)
+        }
+      })
+      groups.unshift(groupData)
+    }
   }
 
-  filteredData.forEach((t) => {
-    const d = format(new Date(t.created_at), 'MMM dd')
-    if (groups[d] !== undefined) {
-      const cat = t.category || categorizeMerchant(t.merchant)
-      groups[d].amount += Number(t.amount)
-      groups[d][cat] = (groups[d][cat] || 0) + Number(t.amount)
-    }
-  })
-
-  return Object.values(groups).reverse()
+  return groups
 }
 
 export async function getCategorySpendingForRange(supabase: SupabaseClient, startDate: string, endDate?: string, filter?: FilterOptions) {
@@ -173,21 +221,23 @@ export async function getFirstTransactionDate(supabase: SupabaseClient) {
 }
 
 export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: number = 0, filter?: FilterOptions) {
-  const baseDate = subDays(new Date(), weekOffset * 7)
-  const startDate = startOfDay(subDays(baseDate, 6)).toISOString()
-  const endDate = endOfDay(baseDate).toISOString()
+  const baseDate = subWeeks(new Date(), weekOffset)
+  const startDate = startOfDay(startOfWeek(baseDate, { weekStartsOn: 1 })).toISOString()
+  const endDate = endOfDay(endOfWeek(baseDate, { weekStartsOn: 1 })).toISOString()
+
   
-  const [trends, categories, firstDate] = await Promise.all([
-    getDailySpending(supabase, 7, weekOffset, filter),
+  const [trends, categories, firstDate, transactions] = await Promise.all([
+    getDailySpending(supabase, 7, weekOffset, filter, 1, 'week'),
     getCategorySpendingForRange(supabase, startDate, endDate, filter),
-    getFirstTransactionDate(supabase)
+    getFirstTransactionDate(supabase),
+    getTransactionsForRange(supabase, startDate, endDate, filter)
   ])
-  return { trends, categories, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
+  return { trends, categories, transactions, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
 export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOffset: number = 0, filter?: FilterOptions) {
-  const baseDate = subMonths(new Date(), monthOffset * 12)
-  const startDate = startOfMonth(subMonths(baseDate, 11)).toISOString()
+  const baseDate = subMonths(new Date(), monthOffset)
+  const startDate = startOfMonth(baseDate).toISOString()
   const endDate = endOfMonth(baseDate).toISOString()
   
   let query = supabase
@@ -201,10 +251,11 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
     query = query.eq('card', filter.card)
   }
 
-  const [categories, { data, error }, firstDate] = await Promise.all([
+  const [categories, { data, error }, firstDate, transactions] = await Promise.all([
     getCategorySpendingForRange(supabase, startDate, endDate, filter),
     query,
-    getFirstTransactionDate(supabase)
+    getFirstTransactionDate(supabase),
+    getTransactionsForRange(supabase, startDate, endDate, filter)
   ])
 
   if (error) throw error
@@ -214,29 +265,36 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
     filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
   }
 
-  const groups: Record<string, any> = {}
-  for (let i = 0; i < 12; i++) {
-    const d = format(subMonths(baseDate, i), 'MMM yyyy')
-    groups[d] = { date: d, amount: 0 }
+  const daysInMonth = eachDayOfInterval({ start: new Date(startDate), end: new Date(endDate) })
+  const groupDays = 7
+  const trends: any[] = []
+
+  for (let i = 0; i < daysInMonth.length; i += groupDays) {
+    const startGroupDate = daysInMonth[i]
+    const endGroupDate = daysInMonth[Math.min(i + groupDays - 1, daysInMonth.length - 1)]
+    const label = `${format(startGroupDate, 'MMM dd')} - ${format(endGroupDate, 'dd')}`
+    
+    const groupData: any = { date: label, amount: 0 }
+    
+    const groupDaysSlice = daysInMonth.slice(i, i + groupDays).map(d => format(d, 'yyyy-MM-dd'))
+
+    filteredData.forEach(t => {
+      const transactionDay = getCalendarDay(t.created_at)
+      if (groupDaysSlice.includes(transactionDay)) {
+        const cat = t.category || categorizeMerchant(t.merchant)
+        groupData.amount += Number(t.amount)
+        groupData[cat] = (groupData[cat] || 0) + Number(t.amount)
+      }
+    })
+    trends.push(groupData)
   }
 
-  filteredData.forEach((t) => {
-    const d = format(new Date(t.created_at), 'MMM yyyy')
-    if (groups[d] !== undefined) {
-      const cat = t.category || categorizeMerchant(t.merchant)
-      groups[d].amount += Number(t.amount)
-      groups[d][cat] = (groups[d][cat] || 0) + Number(t.amount)
-    }
-  })
-
-  const trends = Object.values(groups).reverse()
-
-  return { trends, categories, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
+  return { trends, categories, transactions, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
 export async function getYearlySpending(supabase: SupabaseClient, yearOffset: number = 0, filter?: FilterOptions) {
-  const baseDate = subYears(new Date(), yearOffset * 5)
-  const startDate = startOfYear(subYears(baseDate, 4)).toISOString()
+  const baseDate = subYears(new Date(), yearOffset)
+  const startDate = startOfYear(baseDate).toISOString()
   const endDate = endOfYear(baseDate).toISOString()
 
   let query = supabase
@@ -250,10 +308,11 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
     query = query.eq('card', filter.card)
   }
 
-  const [categories, { data, error }, firstDate] = await Promise.all([
+  const [categories, { data, error }, firstDate, transactions] = await Promise.all([
     getCategorySpendingForRange(supabase, startDate, endDate, filter),
     query,
-    getFirstTransactionDate(supabase)
+    getFirstTransactionDate(supabase),
+    getTransactionsForRange(supabase, startDate, endDate, filter)
   ])
 
   if (error) throw error
@@ -263,22 +322,52 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
     filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
   }
 
-  const groups: Record<string, any> = {}
-  filteredData.forEach((t) => {
-    const d = format(new Date(t.created_at), 'yyyy')
-    if (!groups[d]) groups[d] = { date: d, amount: 0 }
-    const cat = t.category || categorizeMerchant(t.merchant)
-    groups[d].amount += Number(t.amount)
-    groups[d][cat] = (groups[d][cat] || 0) + Number(t.amount)
+  const months = eachMonthOfInterval({ start: new Date(startDate), end: new Date(endDate) })
+  const trends = months.map(month => {
+    const monthPrefix = format(month, 'yyyy-MM')
+    const monthData: any = { date: format(month, 'MMM'), amount: 0 }
+    
+    filteredData.forEach(t => {
+      if (getCalendarDay(t.created_at).startsWith(monthPrefix)) {
+        const cat = t.category || categorizeMerchant(t.merchant)
+        monthData.amount += Number(t.amount)
+        monthData[cat] = (monthData[cat] || 0) + Number(t.amount)
+      }
+    })
+    return monthData
   })
 
-  const trends = Object.values(groups)
-
-  return { trends, categories, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
+  return { trends, categories, transactions, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
 export async function getSpendingByCategory(supabase: SupabaseClient) {
   return getCategorySpendingForRange(supabase, startOfMonth(new Date()).toISOString())
+}
+
+export async function getTransactionsForRange(supabase: SupabaseClient, startDate: string, endDate: string, filter?: FilterOptions) {
+  let query = supabase
+    .from('transactions')
+    .select('*')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .order('created_at', { ascending: false })
+
+  if (filter?.card) {
+    query = query.eq('card', filter.card)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+
+  let filteredData = data
+  if (filter?.category) {
+    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
+  }
+  
+  return filteredData.map(t => ({
+    ...t,
+    category: t.category || categorizeMerchant(t.merchant)
+  })) as Transaction[]
 }
 
 export async function getHistoricalMonthlyAverage(supabase: SupabaseClient) {
