@@ -31,11 +31,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const total = payload[0].payload.amount;
+    const fullDateLabel = payload[0].payload.fullDate || label;
     const items = payload.filter((entry: any) => entry.name !== 'amount' && entry.value > 0);
     
     return (
       <div className="bg-white p-4 rounded-2xl shadow-2xl border border-gray-100 min-w-[200px]">
-        <p className="text-[10px] font-black text-black uppercase tracking-widest mb-3">{label}</p>
+        <p className="text-[10px] font-black text-black uppercase tracking-widest mb-3">{fullDateLabel}</p>
         <div className="space-y-2 mb-3">
           {items.map((entry: any, index: number) => (
             <div key={index} className="flex justify-between items-center gap-4">

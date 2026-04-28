@@ -138,9 +138,10 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     const dateInterval = eachDayOfInterval({ start: startDateObj, end: endDateObj })
     dateInterval.forEach(date => {
       const dayStr = format(date, 'yyyy-MM-dd')
-      const label = alignment === 'week' ? format(date, 'EEE') : format(date, 'MMM dd')
+      const label = alignment === 'week' ? format(date, 'EEE') : format(date, 'd')
+      const fullDate = format(date, 'MMM dd')
       
-      const dayData: any = { date: label, amount: 0 }
+      const dayData: any = { date: label, fullDate, amount: 0 }
       filteredData.forEach(t => {
         if (getCalendarDay(t.created_at) === dayStr) {
           const cat = t.category || categorizeMerchant(t.merchant)
@@ -156,8 +157,9 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
       const endGroupDate = subDays(baseDate, i)
       const startGroupDate = subDays(endGroupDate, groupDays - 1)
       const label = `${format(startGroupDate, 'd')}-${format(endGroupDate, 'd')}`
+      const fullDate = `${format(startGroupDate, 'MMM dd')} - ${format(endGroupDate, 'MMM dd')}`
       
-      const groupData: any = { date: label, amount: 0 }
+      const groupData: any = { date: label, fullDate, amount: 0 }
       
       filteredData.forEach(t => {
         const tDate = new Date(getCalendarDay(t.created_at) + 'T00:00:00') // Treat as local time
@@ -325,7 +327,9 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
   const months = eachMonthOfInterval({ start: new Date(startDate), end: new Date(endDate) })
   const trends = months.map(month => {
     const monthPrefix = format(month, 'yyyy-MM')
-    const monthData: any = { date: format(month, 'MMM'), amount: 0 }
+    const label = format(month, 'MMM')
+    const fullDate = format(month, 'MMMM yyyy')
+    const monthData: any = { date: label, fullDate, amount: 0 }
     
     filteredData.forEach(t => {
       if (getCalendarDay(t.created_at).startsWith(monthPrefix)) {
