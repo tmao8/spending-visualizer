@@ -70,7 +70,7 @@ export function SpendingBarChart({ data }: SpendingBarChartProps) {
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
+        <BarChart data={data} margin={{ top: 0, right: -15, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
           <XAxis 
             dataKey="date" 

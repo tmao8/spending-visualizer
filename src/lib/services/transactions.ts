@@ -155,7 +155,7 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     for (let i = 0; i < days; i += groupDays) {
       const endGroupDate = subDays(baseDate, i)
       const startGroupDate = subDays(endGroupDate, groupDays - 1)
-      const label = `${format(startGroupDate, 'MMM dd').split(' ')[0]} ${format(startGroupDate, 'dd')}-${format(endGroupDate, 'dd')}`
+      const label = `${format(startGroupDate, 'd')}-${format(endGroupDate, 'd')}`
       
       const groupData: any = { date: label, amount: 0 }
       
