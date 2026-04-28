@@ -76,13 +76,13 @@ export function SpendingBarChart({ data }: SpendingBarChartProps) {
             dataKey="date" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 11, fontWeight: 700, fill: '#9ca3af' }}
-            minTickGap={20}
+            tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }}
+            minTickGap={10}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 11, fontWeight: 700, fill: '#9ca3af' }}
+            tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }}
             tickFormatter={(value) => `$${value}`}
           />
           <Tooltip 

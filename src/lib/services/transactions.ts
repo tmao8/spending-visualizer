@@ -138,7 +138,7 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     const dateInterval = eachDayOfInterval({ start: startDateObj, end: endDateObj })
     dateInterval.forEach(date => {
       const dayStr = format(date, 'yyyy-MM-dd')
-      const label = alignment === 'week' ? format(date, 'eee') : format(date, 'MMM dd')
+      const label = alignment === 'week' ? format(date, 'EEE') : format(date, 'MMM dd')
       
       const dayData: any = { date: label, amount: 0 }
       filteredData.forEach(t => {
@@ -155,7 +155,7 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     for (let i = 0; i < days; i += groupDays) {
       const endGroupDate = subDays(baseDate, i)
       const startGroupDate = subDays(endGroupDate, groupDays - 1)
-      const label = `${format(startGroupDate, 'MMM dd')} - ${format(endGroupDate, 'dd')}`
+      const label = `${format(startGroupDate, 'MMM dd').split(' ')[0]} ${format(startGroupDate, 'dd')}-${format(endGroupDate, 'dd')}`
       
       const groupData: any = { date: label, amount: 0 }
       
@@ -272,7 +272,7 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
   for (let i = 0; i < daysInMonth.length; i += groupDays) {
     const startGroupDate = daysInMonth[i]
     const endGroupDate = daysInMonth[Math.min(i + groupDays - 1, daysInMonth.length - 1)]
-    const label = `${format(startGroupDate, 'MMM dd')} - ${format(endGroupDate, 'dd')}`
+    const label = `${format(startGroupDate, 'd')}-${format(endGroupDate, 'd')}`
     
     const groupData: any = { date: label, amount: 0 }
     
@@ -414,3 +414,4 @@ export async function addTransaction(supabase: SupabaseClient, transaction: Omit
   if (error) throw error
   return data as Transaction
 }
+
