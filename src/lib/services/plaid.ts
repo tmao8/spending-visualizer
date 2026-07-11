@@ -80,6 +80,11 @@ const mapPlaidCategory = (plaidPrimary?: string): string => {
   }
 };
 
+function formatCardName(name: string): string {
+  // Strip trailing spaces, dots, dashes, asterisks, and 2-5 digits
+  return name.replace(/[\s\*\.\-]+(\d{2,5})$/, '').trim();
+}
+
 export const syncTransactions = async (supabase: SupabaseClient, userId: string) => {
   // 1. Get all connections for this user
   const { data: connections, error: connError } = await supabase
@@ -148,7 +153,7 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
             plaid_transaction_id: t.transaction_id,
             merchant: merchant,
             amount: t.amount,
-            card: accountsMap[t.account_id] || t.account_id, // Map account_id to name
+            card: formatCardName(accountsMap[t.account_id] || t.account_id), // Map account_id to name and truncate
             category: category,
             created_at: t.datetime || `${t.date}T00:00:00Z`,
             pending: t.pending,

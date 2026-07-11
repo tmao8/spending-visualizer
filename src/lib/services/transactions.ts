@@ -414,6 +414,50 @@ export async function getTransactionsForRange(supabase: SupabaseClient, startDat
   })) as Transaction[]
 }
 
+export async function getSubscriptions(supabase: SupabaseClient) {
+  const startDate = subDays(new Date(), 90).toISOString();
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('merchant, amount, created_at, category')
+    .gte('created_at', startDate)
+    .gt('amount', 0); // Ignore refunds/payments
+  
+  if (error || !data) return [];
+  
+  const map: Record<string, { merchant: string, amount: number, dates: Date[], category: string }> = {};
+  
+  data.forEach(t => {
+    const key = `${t.merchant}_${t.amount}`;
+    if (!map[key]) {
+      map[key] = { merchant: t.merchant, amount: t.amount, dates: [], category: t.category || categorizeMerchant(t.merchant) };
+    }
+    map[key].dates.push(new Date(t.created_at));
+  });
+  
+  const subscriptions = Object.values(map).filter(sub => {
+    if (sub.dates.length < 2) return false;
+    sub.dates.sort((a, b) => b.getTime() - a.getTime());
+    
+    // Check if the most recent gap is roughly a month (20-40 days)
+    const gapDays = (sub.dates[0].getTime() - sub.dates[1].getTime()) / (1000 * 60 * 60 * 24);
+    return gapDays >= 20 && gapDays <= 40;
+  });
+  
+  return subscriptions.sort((a, b) => b.amount - a.amount);
+}
+
+export async function getBudgets(supabase: SupabaseClient) {
+  const { data, error } = await supabase.from('budgets').select('*');
+  if (error || !data) {
+    // Return default demo budgets if table doesn't exist yet
+    return [
+      { category: 'Food & Drink', amount: 500 },
+      { category: 'Shopping', amount: 300 }
+    ];
+  }
+  return data;
+}
+
 export async function getHistoricalMonthlyAverage(supabase: SupabaseClient) {
   const firstDate = await getFirstTransactionDate(supabase)
   const now = new Date()

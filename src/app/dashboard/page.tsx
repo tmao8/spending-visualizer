@@ -10,7 +10,9 @@ import {
   getRecentTransactions,
   getSpendingByCategory,
   getSpendingByCard,
-  getHistoricalMonthlyAverage
+  getHistoricalMonthlyAverage,
+  getSubscriptions,
+  getBudgets
 } from '@/lib/services/transactions'
 import { subDays, startOfDay, endOfDay } from 'date-fns'
 import { SpendingBarChart } from '@/components/dashboard/SpendingBarChart'
@@ -18,6 +20,8 @@ import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
 import { CardBalances } from '@/components/dashboard/CardBalances'
+import { SubscriptionsList } from '@/components/dashboard/SubscriptionsList'
+import { BudgetProgress } from '@/components/dashboard/BudgetProgress'
 import { PlaidConnect } from '@/components/dashboard/PlaidConnect'
 import { PlaidSyncManager } from '@/components/dashboard/PlaidSyncManager'
 import { LogOut, ArrowUpRight, Sparkles } from 'lucide-react'
@@ -39,13 +43,15 @@ export default async function DashboardPage() {
   const endDate = endOfDay(new Date()).toISOString()
 
   // Fetch data in parallel
-  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage] = await Promise.all([
+  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage, subscriptions, budgets] = await Promise.all([
     getMonthlyTotal(supabase),
     getDailySpending(supabase, 30, 0, undefined, 5, 'day'),
     getSpendingByCategory(supabase, undefined, startDate, endDate),
     getRecentTransactions(supabase),
     getSpendingByCard(supabase, undefined, startDate, endDate),
     getHistoricalMonthlyAverage(supabase),
+    getSubscriptions(supabase),
+    getBudgets(supabase),
   ])
 
   return (
@@ -133,6 +139,9 @@ export default async function DashboardPage() {
 
             <SpendingByCard data={cardSpending} />
             <CardBalances />
+            
+            <BudgetProgress budgets={budgets} categorySpending={categorySpending} />
+            <SubscriptionsList subscriptions={subscriptions} />
             
             {/* Quick Insights or other desktop elements can go here */}
             <section className="bg-black rounded-3xl p-8 text-white">
