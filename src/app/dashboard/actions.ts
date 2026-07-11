@@ -40,3 +40,34 @@ export async function createManualTransaction(formData: FormData) {
     return { error: error.message || 'Failed to add transaction' }
   }
 }
+
+export async function saveBudget(category: string, amount: number) {
+  const supabase = await createClient()
+  try {
+    const { error } = await supabase
+      .from('budgets')
+      .upsert({ category, amount }, { onConflict: 'category' })
+    if (error) throw error
+    revalidatePath('/dashboard')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error saving budget:', error)
+    return { error: error.message || 'Failed to save budget' }
+  }
+}
+
+export async function deleteBudget(category: string) {
+  const supabase = await createClient()
+  try {
+    const { error } = await supabase
+      .from('budgets')
+      .delete()
+      .eq('category', category)
+    if (error) throw error
+    revalidatePath('/dashboard')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error deleting budget:', error)
+    return { error: error.message || 'Failed to delete budget' }
+  }
+}
