@@ -42,7 +42,7 @@ export default async function DashboardPage() {
   const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage] = await Promise.all([
     getMonthlyTotal(supabase),
     getDailySpending(supabase, 30, 0, undefined, 5, 'day'),
-    getSpendingByCategory(supabase),
+    getSpendingByCategory(supabase, undefined, startDate, endDate),
     getRecentTransactions(supabase),
     getSpendingByCard(supabase, undefined, startDate, endDate),
     getHistoricalMonthlyAverage(supabase),
@@ -59,11 +59,11 @@ export default async function DashboardPage() {
               Clarity.
             </h1>
             <div className="flex items-center gap-4">
-              <PlaidConnect />
               <PlaidSyncManager />
             </div>
           </div>
           <div className="flex items-center gap-6">
+            <PlaidConnect />
             <Link 
               href="/dashboard/trends" 
               className="text-sm font-semibold text-gray-500 hover:text-black transition-colors flex items-center gap-1"

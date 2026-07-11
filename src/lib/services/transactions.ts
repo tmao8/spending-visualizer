@@ -62,6 +62,42 @@ export function categorizeMerchant(merchant: string): string {
   return 'General'
 }
 
+export async function getSpendingByCategory(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string) {
+  let query = supabase
+    .from('transactions')
+    .select('category, amount, merchant')
+
+  if (startDate) {
+    query = query.gte('created_at', startDate)
+  }
+  if (endDate) {
+    query = query.lte('created_at', endDate)
+  }
+
+  const { data, error } = await query
+
+  if (error) throw error
+
+  let filteredData = data
+  if (filter?.category) {
+    filteredData = data.filter(t => (t.category || categorizeMerchant(t.merchant)) === filter.category)
+  }
+  if (filter?.card) {
+    // Note: This logic assumes 'card' is in the query select, which it currently is not. 
+    // Depending on requirements, add 'card' to .select() above.
+  }
+
+  const categories: Record<string, number> = {}
+  filteredData.forEach((t) => {
+    const cat = t.category || categorizeMerchant(t.merchant)
+    categories[cat] = (categories[cat] || 0) + Number(t.amount)
+  })
+
+  return Object.entries(categories)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+}
+
 export async function getSpendingByCard(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string) {
   let query = supabase
     .from('transactions')

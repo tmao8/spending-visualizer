@@ -75,6 +75,7 @@ export function TrendsView({
   }
   
   const totalPeriodSpend = activeData.trends.reduce((sum, d) => sum + d.amount, 0)
+  const peakLabel = timeframe === 'weekly' ? 'Peak Day' : timeframe === 'monthly' ? 'Peak Week' : 'Peak Month'
 
   const activeCardData = Object.entries(
     activeData.transactions.reduce((acc, t) => {
@@ -205,7 +206,7 @@ export function TrendsView({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Peak {timeframe.replace('ly', '')}</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{peakLabel}</p>
               <p className="text-2xl font-black text-black">
                 ${Math.max(...activeData.trends.map(d => d.amount), 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
