@@ -76,6 +76,14 @@ export function TrendsView({
   
   const totalPeriodSpend = activeData.trends.reduce((sum, d) => sum + d.amount, 0)
 
+  const activeCardData = Object.entries(
+    activeData.transactions.reduce((acc, t) => {
+      const cardName = t.card || 'Unknown'
+      acc[cardName] = (acc[cardName] || 0) + Number(t.amount)
+      return acc
+    }, {} as Record<string, number>)
+  ).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
+
   return (
     <div className="space-y-12">
       {/* Timeframe Selector & Navigation */}
@@ -230,7 +238,7 @@ export function TrendsView({
           </div>
 
           <SpendingByCard 
-            data={cardData} 
+            data={activeCardData} 
             onCardClick={(card) => handleFilter('card', card)}
           />
 
