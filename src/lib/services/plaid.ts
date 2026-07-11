@@ -137,7 +137,9 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
         }
 
         // Process added and modified together (Upsert)
-        const toUpsert = [...added, ...modified].map(t => {
+        const toUpsert = [...added, ...modified]
+          .filter(t => t.amount > 0 && !['LOAN_PAYMENTS', 'TRANSFER_IN', 'TRANSFER_OUT'].includes(t.personal_finance_category?.primary || ''))
+          .map(t => {
           const merchant = t.merchant_name || t.name || 'Unknown';
           // Use Plaid's personal finance category if available
           const category = mapPlaidCategory(t.personal_finance_category?.primary);
