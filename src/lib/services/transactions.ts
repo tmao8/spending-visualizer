@@ -388,10 +388,6 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
   return { trends, categories, transactions, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
-export async function getSpendingByCategory(supabase: SupabaseClient) {
-  return getCategorySpendingForRange(supabase, startOfMonth(new Date()).toISOString())
-}
-
 export async function getTransactionsForRange(supabase: SupabaseClient, startDate: string, endDate: string, filter?: FilterOptions) {
   let query = supabase
     .from('transactions')
