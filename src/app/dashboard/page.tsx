@@ -12,10 +12,12 @@ import {
   getSpendingByCard,
   getHistoricalMonthlyAverage
 } from '@/lib/services/transactions'
+import { subDays, startOfDay, endOfDay } from 'date-fns'
 import { SpendingBarChart } from '@/components/dashboard/SpendingBarChart'
 import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
+import { CardBalances } from '@/components/dashboard/CardBalances'
 import { TransactionModal } from '@/components/dashboard/TransactionModal'
 import { PlaidConnect } from '@/components/dashboard/PlaidConnect'
 import { PlaidSyncManager } from '@/components/dashboard/PlaidSyncManager'
@@ -33,13 +35,17 @@ export default async function DashboardPage() {
     return redirect('/login')
   }
 
+  // 30 day date range for "Spending by Card" to match DailySpending
+  const startDate = startOfDay(subDays(new Date(), 29)).toISOString()
+  const endDate = endOfDay(new Date()).toISOString()
+
   // Fetch data in parallel
   const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage] = await Promise.all([
     getMonthlyTotal(supabase),
     getDailySpending(supabase, 30, 0, undefined, 5, 'day'),
     getSpendingByCategory(supabase),
     getRecentTransactions(supabase),
-    getSpendingByCard(supabase),
+    getSpendingByCard(supabase, undefined, startDate, endDate),
     getHistoricalMonthlyAverage(supabase),
   ])
 
@@ -123,6 +129,7 @@ export default async function DashboardPage() {
             </section>
 
             <SpendingByCard data={cardSpending} />
+            <CardBalances />
             
             {/* Quick Insights or other desktop elements can go here */}
             <section className="bg-black rounded-3xl p-8 text-white">

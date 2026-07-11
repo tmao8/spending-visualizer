@@ -20,6 +20,9 @@ export const createLinkToken = async (userId: string) => {
     products: ['transactions'] as any,
     country_codes: ['US'] as any,
     language: 'en',
+    transactions: {
+      days_requested: 730,
+    }
   };
 
   const response = await plaidClient.linkTokenCreate(request);
@@ -169,4 +172,31 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
       }
     }
   }
+};
+
+export const getBalances = async (supabase: SupabaseClient, userId: string) => {
+  const { data: connections } = await supabase
+    .from('plaid_connections')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (!connections) return [];
+
+  let allAccounts: any[] = [];
+  for (const connection of connections) {
+    try {
+      const response = await plaidClient.accountsGet({
+        access_token: connection.access_token
+      });
+      allAccounts = [...allAccounts, ...response.data.accounts];
+    } catch (e) {
+      console.error('Error fetching balances:', e);
+    }
+  }
+  return allAccounts.map(acc => ({
+    name: acc.name,
+    balance: acc.balances.current || 0,
+    type: acc.type,
+    subtype: acc.subtype
+  }));
 };

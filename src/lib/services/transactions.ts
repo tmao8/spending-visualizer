@@ -62,10 +62,17 @@ export function categorizeMerchant(merchant: string): string {
   return 'General'
 }
 
-export async function getSpendingByCard(supabase: SupabaseClient, filter?: FilterOptions) {
+export async function getSpendingByCard(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string) {
   let query = supabase
     .from('transactions')
     .select('card, amount, category, merchant')
+
+  if (startDate) {
+    query = query.gte('created_at', startDate)
+  }
+  if (endDate) {
+    query = query.lte('created_at', endDate)
+  }
 
   if (filter?.card) {
     query = query.eq('card', filter.card)
