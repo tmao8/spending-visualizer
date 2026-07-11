@@ -18,10 +18,9 @@ import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
 import { CardBalances } from '@/components/dashboard/CardBalances'
-import { TransactionModal } from '@/components/dashboard/TransactionModal'
 import { PlaidConnect } from '@/components/dashboard/PlaidConnect'
 import { PlaidSyncManager } from '@/components/dashboard/PlaidSyncManager'
-import { LogOut, ArrowUpRight } from 'lucide-react'
+import { LogOut, ArrowUpRight, Sparkles } from 'lucide-react'
 import { signOut } from '../login/actions'
 
 export default async function DashboardPage() {
@@ -55,12 +54,16 @@ export default async function DashboardPage() {
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold tracking-tight text-black">Clarity</h1>
-            <PlaidSyncManager />
+            <h1 className="text-3xl font-black tracking-tight text-black flex items-center gap-2">
+              <Sparkles className="w-8 h-8 text-black" />
+              Clarity.
+            </h1>
+            <div className="flex items-center gap-4">
+              <PlaidConnect />
+              <PlaidSyncManager />
+            </div>
           </div>
           <div className="flex items-center gap-6">
-            <PlaidConnect />
-            <TransactionModal cards={cardSpending.map(c => c.name)} />
             <Link 
               href="/dashboard/trends" 
               className="text-sm font-semibold text-gray-500 hover:text-black transition-colors flex items-center gap-1"

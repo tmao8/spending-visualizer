@@ -13,7 +13,6 @@ import {
 } from '@/lib/services/transactions'
 
 import { TrendsView } from '@/components/dashboard/TrendsView'
-import { TransactionModal } from '@/components/dashboard/TransactionModal'
 import { ChevronLeft } from 'lucide-react'
 import { Suspense } from 'react'
 
@@ -59,7 +58,6 @@ async function TrendsContent({ searchParams }: { searchParams: Promise<any> }) {
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-black">Spending Trends</h1>
           </div>
-          <TransactionModal cards={cardData.map(c => c.name)} />
         </div>
       </header>
 
