@@ -48,12 +48,12 @@ async function TrendsContent({ searchParams }: { searchParams: Promise<any> }) {
   return (
     <>
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
-        <div className="px-8 md:px-12 h-20 flex items-center justify-between">
+        <div className="px-6 md:px-8 h-20 flex items-center justify-between">
           <h1 className="text-2xl font-black tracking-tight text-black">Spending Trends</h1>
         </div>
       </header>
 
-      <main className="px-8 md:px-12 mt-12">
+      <main className="px-6 md:px-8 mt-12">
         <TrendsView 
           weekly={weekly}
           monthly={monthly}

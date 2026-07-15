@@ -17,12 +17,12 @@ export default async function SettingsPage() {
   return (
     <div className="bg-white min-h-screen">
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
-        <div className="px-8 md:px-12 h-20 flex items-center justify-between">
+        <div className="px-6 md:px-8 h-20 flex items-center justify-between">
           <h1 className="text-2xl font-black tracking-tight text-black">Settings</h1>
         </div>
       </header>
 
-      <main className="px-8 md:px-12 py-12 space-y-8 max-w-3xl">
+      <main className="px-6 md:px-8 py-12 space-y-8 max-w-3xl">
         
         <section className="bg-white rounded-3xl border border-gray-100 p-10 shadow-sm">
           <h2 className="text-xl font-black tracking-tight text-black mb-2">Connected Banks</h2>

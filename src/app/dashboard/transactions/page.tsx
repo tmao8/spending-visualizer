@@ -23,13 +23,13 @@ export default async function TransactionsPage() {
   return (
     <div className="bg-white">
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
-        <div className="px-8 md:px-12 h-20 flex items-center justify-between">
+        <div className="px-6 md:px-8 h-20 flex items-center justify-between">
           <h1 className="text-2xl font-black tracking-tight text-black">All Transactions</h1>
           <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{transactions.length} items</p>
         </div>
       </header>
 
-      <main className="px-8 md:px-12 py-12 max-w-4xl">
+      <main className="px-6 md:px-8 py-12 max-w-4xl">
         <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
           <RecentTransactions transactions={transactions} />
         </div>
