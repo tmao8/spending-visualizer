@@ -5,12 +5,12 @@ import { PlaidSyncManager } from '@/components/dashboard/PlaidSyncManager'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col md:flex-row">
+    <div className="min-h-screen bg-white flex">
       <PlaidSyncManager />
       
       {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-gray-100 bg-gray-50/30 p-6 sticky top-0 h-screen shrink-0">
-        <Link href="/dashboard" className="flex items-center gap-2 mb-12 px-2">
+      <aside className="hidden md:flex flex-col w-64 border-r border-gray-100 bg-gray-50/30 p-6 fixed top-0 bottom-0 left-0">
+        <Link href="/dashboard" className="flex items-center gap-2 mb-12">
           <Sparkles className="w-8 h-8 text-black" />
           <h1 className="text-2xl font-black tracking-tight text-black">Clarity.</h1>
         </Link>
@@ -39,7 +39,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 relative pb-24 md:pb-0">
+      <main className="flex-1 min-w-0 relative pb-24 md:pb-0 md:ml-64">
         {children}
       </main>
 

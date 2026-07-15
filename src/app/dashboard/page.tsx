@@ -101,11 +101,10 @@ export default async function DashboardPage() {
 
           {/* Sidebar Area (1/3 width) */}
           <div className="space-y-12">
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold tracking-tight text-black">By Category</h2>
-              </div>
-              <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100">
+            <section className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm relative overflow-hidden group">
+              <h3 className="text-lg font-bold text-black mb-4">By Category</h3>
+              <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-black/[0.02] to-transparent pointer-events-none" />
+              <div className="relative z-10">
                 <MerchantPieChart data={categorySpending} />
               </div>
             </section>

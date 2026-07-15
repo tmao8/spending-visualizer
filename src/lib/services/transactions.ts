@@ -452,7 +452,7 @@ export async function getBudgets(supabase: SupabaseClient) {
   if (error || !data) {
     // Return default demo budgets if table doesn't exist yet
     return [
-      { category: 'Food & Drink', amount: 500 },
+      { category: 'Food & Drinks', amount: 500 },
       { category: 'Shopping', amount: 300 }
     ];
   }
