@@ -20,12 +20,8 @@ import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
 import { CardBalances } from '@/components/dashboard/CardBalances'
-import { SubscriptionsList } from '@/components/dashboard/SubscriptionsList'
 import { BudgetProgress } from '@/components/dashboard/BudgetProgress'
-import { PlaidConnect } from '@/components/dashboard/PlaidConnect'
-import { PlaidSyncManager } from '@/components/dashboard/PlaidSyncManager'
-import { LogOut, ArrowUpRight, Sparkles } from 'lucide-react'
-import { signOut } from '../login/actions'
+import { SubscriptionsList } from '@/components/dashboard/SubscriptionsList'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -55,37 +51,8 @@ export default async function DashboardPage() {
   ])
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-black tracking-tight text-black flex items-center gap-2">
-              <Sparkles className="w-8 h-8 text-black" />
-              Clarity.
-            </h1>
-            <div className="flex items-center gap-4">
-              <PlaidSyncManager />
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <PlaidConnect />
-            <Link 
-              href="/dashboard/trends" 
-              className="text-sm font-semibold text-gray-500 hover:text-black transition-colors flex items-center gap-1"
-            >
-              Trends <ArrowUpRight className="w-4 h-4" />
-            </Link>
-            <form action={signOut}>
-              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:text-black transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 mt-12 space-y-12">
+    <div className="bg-white">
+      <main className="max-w-6xl mx-auto px-6 py-12 space-y-12">
         {/* Summary Section */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -119,6 +86,12 @@ export default async function DashboardPage() {
             <section>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold tracking-tight text-black">Latest Activity</h2>
+                <Link 
+                  href="/dashboard/transactions"
+                  className="text-xs font-bold text-gray-400 hover:text-black uppercase tracking-widest transition-colors"
+                >
+                  View All
+                </Link>
               </div>
               <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
                 <RecentTransactions transactions={recentTransactions} />

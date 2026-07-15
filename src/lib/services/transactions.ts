@@ -42,8 +42,8 @@ export const STATIC_CATEGORIES = [
 ] as const
 
 const CATEGORY_MAP: Record<string, string> = {
-  'starbucks': 'Food & Drink',
-  'mcdonald': 'Food & Drink',
+  'starbucks': 'Food & Drinks',
+  'mcdonald': 'Food & Drinks',
   'uber': 'Transportation',
   'lyft': 'Transportation',
   'amazon': 'Shopping',
