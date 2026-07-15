@@ -6,7 +6,6 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from 'recharts'
 
 import Link from 'next/link'
@@ -49,33 +48,42 @@ export function MerchantPieChart({ data, onCategoryClick }: MerchantPieChartProp
   }
 
   const content = (
-    <div className="h-[300px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={80}
-            paddingAngle={data.length === 1 ? 0 : 5}
-            dataKey="value"
-            onClick={handleSliceClick}
-            className="cursor-pointer focus:outline-none"
-            stroke="none"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getColor(entry.name, index)} />
-            ))}
-          </Pie>
-          <Tooltip 
-            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-            itemStyle={{ color: '#000', fontWeight: 'bold' }}
-            formatter={(value, name) => [`$${Number(value).toFixed(2)}`, name]}
-          />
-          <Legend verticalAlign="bottom" height={36}/>
-        </PieChart>
-      </ResponsiveContainer>
+    <div>
+      <div className="h-[220px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={75}
+              paddingAngle={data.length === 1 ? 0 : 5}
+              dataKey="value"
+              onClick={handleSliceClick}
+              className="cursor-pointer focus:outline-none"
+              stroke="none"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={getColor(entry.name, index)} />
+              ))}
+            </Pie>
+            <Tooltip 
+              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+              itemStyle={{ color: '#000', fontWeight: 'bold' }}
+              formatter={(value, name) => [`$${Number(value).toFixed(2)}`, name]}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-4">
+        {data.map((entry, index) => (
+          <div key={entry.name} className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getColor(entry.name, index) }} />
+            <span className="text-xs font-medium text-gray-600 truncate max-w-[100px]">{entry.name}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 

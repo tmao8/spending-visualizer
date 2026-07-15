@@ -52,7 +52,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="bg-white">
-      <main className="max-w-6xl mx-auto px-6 py-12 space-y-12">
+      <main className="px-8 md:px-12 py-12 space-y-12">
         {/* Summary Section */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
