@@ -11,8 +11,6 @@ import {
   getSpendingByCategory,
   getSpendingByCard,
   getHistoricalMonthlyAverage,
-  getSubscriptions,
-  getBudgets
 } from '@/lib/services/transactions'
 import { subDays, startOfDay, endOfDay } from 'date-fns'
 import { SpendingBarChart } from '@/components/dashboard/SpendingBarChart'
@@ -20,8 +18,7 @@ import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
 import { CardBalances } from '@/components/dashboard/CardBalances'
-import { BudgetProgress } from '@/components/dashboard/BudgetProgress'
-import { SubscriptionsList } from '@/components/dashboard/SubscriptionsList'
+import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -39,16 +36,22 @@ export default async function DashboardPage() {
   const endDate = endOfDay(new Date()).toISOString()
 
   // Fetch data in parallel
-  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage, subscriptions, budgets] = await Promise.all([
+  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage] = await Promise.all([
     getMonthlyTotal(supabase),
     getDailySpending(supabase, 30, 0, undefined, 5, 'day'),
     getSpendingByCategory(supabase, undefined, startDate, endDate),
     getRecentTransactions(supabase),
     getSpendingByCard(supabase, undefined, startDate, endDate),
     getHistoricalMonthlyAverage(supabase),
-    getSubscriptions(supabase),
-    getBudgets(supabase),
   ])
+
+  // Compute insight inline
+  const pctOfAvg = historicalAverage ? Math.round((monthlyTotal / historicalAverage) * 100) : null
+  const insightIcon = pctOfAvg === null ? null : pctOfAvg > 110 ? <ArrowUpRight className="w-4 h-4" /> : pctOfAvg < 90 ? <ArrowDownRight className="w-4 h-4" /> : <Minus className="w-4 h-4" />
+  const insightColor = pctOfAvg === null ? '' : pctOfAvg > 110 ? 'text-red-500' : pctOfAvg < 90 ? 'text-emerald-500' : 'text-gray-400'
+  const insightText = pctOfAvg !== null
+    ? `${pctOfAvg}% of your $${historicalAverage!.toLocaleString(undefined, { maximumFractionDigits: 0 })} monthly avg`
+    : 'First month of tracking'
 
   return (
     <div className="bg-white">
@@ -56,10 +59,14 @@ export default async function DashboardPage() {
         {/* Summary Section */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly Activity</p>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Last 30 Days</p>
             <h2 className="text-6xl font-black tracking-tighter text-black">
               ${monthlyTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h2>
+            <div className={`flex items-center gap-1.5 mt-2 text-sm font-bold ${insightColor}`}>
+              {insightIcon}
+              <span>{insightText}</span>
+            </div>
           </div>
           <Link 
             href="/dashboard/trends"
@@ -111,20 +118,6 @@ export default async function DashboardPage() {
 
             <SpendingByCard data={cardSpending} />
             <CardBalances />
-            
-            <BudgetProgress budgets={budgets} categorySpending={categorySpending} />
-            <SubscriptionsList subscriptions={subscriptions} />
-            
-            {/* Quick Insights or other desktop elements can go here */}
-            <section className="bg-black rounded-3xl p-8 text-white">
-              <h3 className="text-lg font-bold mb-2">Smart Insight</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                {historicalAverage 
-                  ? `You've spent ${((monthlyTotal / historicalAverage) * 100).toFixed(0)}% of your typical monthly average ($${historicalAverage.toLocaleString(undefined, { maximumFractionDigits: 0 })}).`
-                  : "You're in your first month of tracking! Keep adding transactions to see how your spending compares to your future monthly average."
-                }
-              </p>
-            </section>
           </div>
         </div>
       </main>
