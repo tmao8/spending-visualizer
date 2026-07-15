@@ -135,7 +135,8 @@ export async function getSpendingByCard(supabase: SupabaseClient, filter?: Filte
 }
 
 export async function getMonthlyTotal(supabase: SupabaseClient) {
-  const start = startOfDay(startOfMonth(new Date())).toISOString()
+  // Use a rolling 30-day window to match the "Last 30 Days" dashboard label
+  const start = startOfDay(subDays(new Date(), 29)).toISOString()
 
   const { data, error } = await supabase
     .from('transactions')

@@ -1,8 +1,9 @@
 'use client'
 
-import { Target, Pencil, X, Check, Trash2, Plus } from 'lucide-react'
+import { Target, Pencil, X, Trash2, Plus } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { saveBudget, deleteBudget } from '@/app/dashboard/actions'
+import { STATIC_CATEGORIES } from '@/lib/services/transactions'
 
 interface Budget {
   category: string;
@@ -63,18 +64,19 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
           
           return (
             <div key={budget.category} className="group relative">
-              {isEditing && (
-                <button 
-                  onClick={() => handleDelete(budget.category)}
-                  disabled={isPending}
-                  className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-              
               <div className="flex justify-between items-end mb-2">
-                <span className="text-sm font-bold text-black">{budget.category}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-black">{budget.category}</span>
+                  {isEditing && (
+                    <button 
+                      onClick={() => handleDelete(budget.category)}
+                      disabled={isPending}
+                      className="p-1 text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
                 <div className="text-right">
                   <span className={`text-sm font-bold ${isOver ? 'text-red-500' : 'text-black'}`}>
                     ${spent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -103,13 +105,16 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
         <div className="mt-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
           <h5 className="text-xs font-bold text-black uppercase tracking-widest mb-3">Add / Update Budget</h5>
           <div className="flex flex-col gap-3">
-            <input 
-              type="text" 
-              placeholder="Category (e.g. Food & Drink)" 
+            <select
               value={editCategory}
               onChange={e => setEditCategory(e.target.value)}
-              className="w-full px-4 py-2 rounded-xl text-sm font-medium border-none outline-none focus:ring-2 focus:ring-black/5"
-            />
+              className="w-full px-4 py-2 rounded-xl text-sm font-medium border-none outline-none focus:ring-2 focus:ring-black/5 bg-white"
+            >
+              <option value="" disabled>Select Category...</option>
+              {STATIC_CATEGORIES.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">$</span>
