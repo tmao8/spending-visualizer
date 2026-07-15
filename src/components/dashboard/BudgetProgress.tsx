@@ -22,20 +22,30 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
   // Local state for editing
   const [editCategory, setEditCategory] = useState('')
   const [editAmount, setEditAmount] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
 
   const handleSave = async () => {
     if (!editCategory || !editAmount || isNaN(Number(editAmount))) return
     
     startTransition(async () => {
-      await saveBudget(editCategory, Number(editAmount))
-      setEditCategory('')
-      setEditAmount('')
+      setErrorMsg('')
+      const res = await saveBudget(editCategory, Number(editAmount))
+      if (res?.error) {
+        setErrorMsg(res.error)
+      } else {
+        setEditCategory('')
+        setEditAmount('')
+      }
     })
   }
 
   const handleDelete = async (category: string) => {
     startTransition(async () => {
-      await deleteBudget(category)
+      setErrorMsg('')
+      const res = await deleteBudget(category)
+      if (res?.error) {
+        setErrorMsg(res.error)
+      }
     })
   }
 
@@ -104,6 +114,13 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
       {isEditing && (
         <div className="mt-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
           <h5 className="text-xs font-bold text-black uppercase tracking-widest mb-3">Add / Update Budget</h5>
+          
+          {errorMsg && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-100">
+              {errorMsg}
+            </div>
+          )}
+
           <div className="flex flex-col gap-3">
             <select
               value={editCategory}
