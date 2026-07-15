@@ -61,7 +61,14 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                   <Icon className="w-5 h-5 text-gray-400 group-hover:text-black transition-colors" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-black">{t.merchant}</p>
+                  <p className="text-sm font-bold text-black flex items-center gap-2">
+                    {t.merchant}
+                    {t.pending && (
+                      <span className="px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-widest">
+                        Pending
+                      </span>
+                    )}
+                  </p>
                   <p className="text-[12px] text-gray-400 font-medium group-hover:text-black transition-colors">
                     {(() => {
                       const date = new Date(t.created_at)

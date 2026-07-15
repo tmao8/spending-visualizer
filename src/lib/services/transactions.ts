@@ -18,6 +18,21 @@ import {
 } from 'date-fns'
 
 // Helper to get YYYY-MM-DD from a potentially UTC string without timezone shifting
+
+const IN_MEMORY_CACHE = new Map<string, { data: any, timestamp: number }>()
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
+async function withCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const now = Date.now()
+  const cached = IN_MEMORY_CACHE.get(key)
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data as T
+  }
+  const data = await fetcher()
+  IN_MEMORY_CACHE.set(key, { data, timestamp: now })
+  return data
+}
+
 function getCalendarDay(dateStr: string) {
   return dateStr.substring(0, 10)
 }
@@ -29,6 +44,7 @@ export interface Transaction {
   amount: number
   card: string
   category: string
+  pending?: boolean
 }
 
 export interface FilterOptions {
@@ -63,6 +79,7 @@ export function categorizeMerchant(merchant: string): string {
 }
 
 export async function getSpendingByCategory(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string) {
+  return withCache(`getSpendingByCategory-${JSON.stringify(filter)}-${startDate}-${endDate}`, async () => {
   let query = supabase
     .from('transactions')
     .select('category, amount, merchant')
@@ -96,9 +113,11 @@ export async function getSpendingByCategory(supabase: SupabaseClient, filter?: F
   return Object.entries(categories)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
+  })
 }
 
 export async function getSpendingByCard(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string) {
+  return withCache(`getSpendingByCard-${JSON.stringify(filter)}-${startDate}-${endDate}`, async () => {
   let query = supabase
     .from('transactions')
     .select('card, amount, category, merchant')
@@ -132,9 +151,11 @@ export async function getSpendingByCard(supabase: SupabaseClient, filter?: Filte
   return Object.entries(cards)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
+  })
 }
 
 export async function getMonthlyTotal(supabase: SupabaseClient) {
+  return withCache(`getMonthlyTotal`, async () => {
   // Use a rolling 30-day window to match the "Last 30 Days" dashboard label
   const start = startOfDay(subDays(new Date(), 29)).toISOString()
 
@@ -146,6 +167,7 @@ export async function getMonthlyTotal(supabase: SupabaseClient) {
   if (error) throw error
 
   return data.reduce((sum, t) => sum + Number(t.amount), 0)
+  })
 }
 
 export async function getDailySpending(supabase: SupabaseClient, days: number = 30, weekOffset: number = 0, filter?: FilterOptions, groupDays: number = 1, alignment: 'day' | 'week' = 'day') {
@@ -255,6 +277,7 @@ export async function getCategorySpendingForRange(supabase: SupabaseClient, star
 }
 
 export async function getFirstTransactionDate(supabase: SupabaseClient) {
+  return withCache(`getFirstTransactionDate`, async () => {
   const { data, error } = await supabase
     .from('transactions')
     .select('created_at')
@@ -264,6 +287,7 @@ export async function getFirstTransactionDate(supabase: SupabaseClient) {
 
   if (error && error.code !== 'PGRST116') throw error
   return data?.created_at ? new Date(data.created_at) : new Date()
+  })
 }
 
 export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: number = 0, filter?: FilterOptions) {
@@ -416,6 +440,7 @@ export async function getTransactionsForRange(supabase: SupabaseClient, startDat
 }
 
 export async function getSubscriptions(supabase: SupabaseClient) {
+  return withCache(`getSubscriptions`, async () => {
   const startDate = subDays(new Date(), 90).toISOString();
   const { data, error } = await supabase
     .from('transactions')
@@ -445,9 +470,11 @@ export async function getSubscriptions(supabase: SupabaseClient) {
   });
   
   return subscriptions.sort((a, b) => b.amount - a.amount);
+  })
 }
 
 export async function getBudgets(supabase: SupabaseClient) {
+  return withCache(`getBudgets`, async () => {
   const { data, error } = await supabase.from('budgets').select('*');
   if (error || !data) {
     // Return default demo budgets if table doesn't exist yet
@@ -457,9 +484,11 @@ export async function getBudgets(supabase: SupabaseClient) {
     ];
   }
   return data;
+  })
 }
 
 export async function getHistoricalMonthlyAverage(supabase: SupabaseClient) {
+  return withCache(`getHistoricalMonthlyAverage`, async () => {
   const firstDate = await getFirstTransactionDate(supabase)
   const now = new Date()
   
@@ -476,6 +505,7 @@ export async function getHistoricalMonthlyAverage(supabase: SupabaseClient) {
 
   const totalHistorical = data.reduce((sum, t) => sum + Number(t.amount), 0)
   return totalHistorical / Math.max(1, monthDiff - 1) // Divide by number of completed months
+  })
 }
 
 export async function getRecentTransactions(supabase: SupabaseClient, limit: number = 10) {

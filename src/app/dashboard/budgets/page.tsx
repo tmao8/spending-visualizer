@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSubscriptions, getBudgets, getSpendingByCategory } from '@/lib/services/transactions'
-import { subDays, startOfDay, endOfDay } from 'date-fns'
+import { subDays, startOfDay, endOfDay, startOfMonth, endOfMonth } from 'date-fns'
 import { BudgetProgress } from '@/components/dashboard/BudgetProgress'
 import { SubscriptionsList } from '@/components/dashboard/SubscriptionsList'
 import { Target, RotateCw } from 'lucide-react'
@@ -17,8 +17,8 @@ export default async function BudgetsPage() {
     return redirect('/login')
   }
 
-  const startDate = startOfDay(subDays(new Date(), 29)).toISOString()
-  const endDate = endOfDay(new Date()).toISOString()
+  const startDate = startOfMonth(new Date()).toISOString()
+  const endDate = endOfMonth(new Date()).toISOString()
 
   const [budgets, subscriptions, categorySpending] = await Promise.all([
     getBudgets(supabase),
