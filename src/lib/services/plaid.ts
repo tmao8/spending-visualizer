@@ -132,13 +132,18 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
         hasMore = data.has_more;
         nextCursor = data.next_cursor;
 
-        // Process removed (delete them)
-        if (removed.length > 0) {
-          const removedIds = removed.map(t => t.transaction_id);
+        // Collect pending_transaction_ids to remove the old pending versions
+        const replacedPendingIds = [...added, ...modified]
+          .map(t => t.pending_transaction_id)
+          .filter((id): id is string => id != null);
+
+        // Process removed (delete them and replaced pending transactions)
+        const allIdsToRemove = [...removed.map(t => t.transaction_id), ...replacedPendingIds];
+        if (allIdsToRemove.length > 0) {
           await supabase
             .from('transactions')
             .delete()
-            .in('plaid_transaction_id', removedIds);
+            .in('plaid_transaction_id', allIdsToRemove);
         }
 
         // Process added and modified together (Upsert)
