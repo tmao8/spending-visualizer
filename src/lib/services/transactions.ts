@@ -22,6 +22,10 @@ import {
 const IN_MEMORY_CACHE = new Map<string, { data: any, timestamp: number }>()
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
+export function clearTransactionCache() {
+  IN_MEMORY_CACHE.clear()
+}
+
 async function withCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   const now = Date.now()
   const cached = IN_MEMORY_CACHE.get(key)

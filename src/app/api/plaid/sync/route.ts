@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { syncTransactions } from '@/lib/services/plaid';
+import { clearTransactionCache } from '@/lib/services/transactions';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
@@ -12,6 +13,7 @@ export async function POST() {
     }
 
     await syncTransactions(supabase, user.id);
+    clearTransactionCache();
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error syncing transactions:', error);
