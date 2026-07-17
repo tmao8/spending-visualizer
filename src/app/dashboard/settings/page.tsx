@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { PlaidConnect } from '@/components/dashboard/PlaidConnect'
 import { LogOut } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
+import { ForceResyncButton } from '@/components/dashboard/ForceResyncButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,12 @@ export default async function SettingsPage() {
               <LogOut className="w-4 h-4" /> Sign Out
             </button>
           </form>
+        </section>
+
+        <section className="bg-white rounded-3xl border border-gray-100 p-10 shadow-sm border-red-100">
+          <h2 className="text-xl font-black tracking-tight text-black mb-2 text-red-600">Troubleshooting</h2>
+          <p className="text-sm font-medium text-gray-500 mb-8">Fix duplicate pending transactions or missing historical refunds.</p>
+          <ForceResyncButton />
         </section>
         
       </main>
