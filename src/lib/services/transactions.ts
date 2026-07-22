@@ -19,22 +19,15 @@ import {
 
 // Helper to get YYYY-MM-DD from a potentially UTC string without timezone shifting
 
-const IN_MEMORY_CACHE = new Map<string, { data: any, timestamp: number }>()
-const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+// No-op: kept for API compatibility with sync route
+export function clearTransactionCache() {}
 
-export function clearTransactionCache() {
-  IN_MEMORY_CACHE.clear()
-}
-
-async function withCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
-  const now = Date.now()
-  const cached = IN_MEMORY_CACHE.get(key)
-  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
-    return cached.data as T
-  }
-  const data = await fetcher()
-  IN_MEMORY_CACHE.set(key, { data, timestamp: now })
-  return data
+// Pass-through: in-memory caching was removed because it's incompatible with
+// Vercel's serverless architecture (each request can hit a different lambda
+// instance, so clearing the cache after sync doesn't propagate to other instances).
+// Use database indexes for performance instead.
+async function withCache<T>(_key: string, fetcher: () => Promise<T>): Promise<T> {
+  return fetcher()
 }
 
 function getCalendarDay(dateStr: string) {
