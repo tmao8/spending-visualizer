@@ -19,11 +19,11 @@ export async function forceResync(): Promise<{ success: boolean; message: string
     return { success: false, message: `Failed to reset cursor: ${cursorError.message}` }
   }
 
-  // 2. Delete ALL transactions (not just pending) so we rebuild from scratch
+  // 2. Delete pending transactions so they get re-synced with correct status
   const { error: deleteError, count } = await supabase
     .from('transactions')
     .delete({ count: 'exact' })
-    .neq('id', '00000000-0000-0000-0000-000000000000') // delete everything (Supabase requires a filter)
+    .eq('pending', true)
 
   if (deleteError) {
     return { success: false, message: `Failed to delete transactions: ${deleteError.message}` }
