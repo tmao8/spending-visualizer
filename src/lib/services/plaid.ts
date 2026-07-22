@@ -132,6 +132,8 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
         hasMore = data.has_more;
         nextCursor = data.next_cursor;
 
+        console.log(`[Plaid Sync] Page: added=${added.length}, modified=${modified.length}, removed=${removed.length}, hasMore=${hasMore}`);
+
         // Collect pending_transaction_ids to remove the old pending versions
         const replacedPendingIds = [...added, ...modified]
           .map(t => t.pending_transaction_id)
@@ -140,22 +142,28 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
         // Process removed (delete them and replaced pending transactions)
         const allIdsToRemove = [...removed.map(t => t.transaction_id), ...replacedPendingIds];
         if (allIdsToRemove.length > 0) {
-          await supabase
+          const { error: delError } = await supabase
             .from('transactions')
             .delete()
             .in('plaid_transaction_id', allIdsToRemove);
+          if (delError) console.error('[Plaid Sync] Delete error:', delError.message);
+          else console.log(`[Plaid Sync] Deleted ${allIdsToRemove.length} replaced/removed transactions`);
         }
 
         // Process added and modified together (Upsert)
         const EXCLUDED_CATEGORIES = ['LOAN_PAYMENTS', 'TRANSFER_IN', 'TRANSFER_OUT', 'INCOME', 'RENT_AND_MORTGAGES'];
         const PAYMENT_KEYWORDS = ['payment', 'pmt', 'autopay', 'thank you'];
         
-        const toUpsert = [...added, ...modified]
+        const allTransactions = [...added, ...modified];
+        const toUpsert = allTransactions
           .filter(t => {
             const isExcludedCategory = EXCLUDED_CATEGORIES.includes(t.personal_finance_category?.primary || '');
             const merchant = (t.merchant_name || t.name || '').toLowerCase();
             const isLikelyPayment = t.amount < 0 && PAYMENT_KEYWORDS.some(k => merchant.includes(k));
             
+            if (isExcludedCategory || isLikelyPayment) {
+              console.log(`[Plaid Sync] Filtered out: "${t.merchant_name || t.name}" amount=${t.amount} category=${t.personal_finance_category?.primary} pending=${t.pending}`);
+            }
             return !isExcludedCategory && !isLikelyPayment;
           })
           .map(t => {
@@ -175,10 +183,13 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
           };
         });
 
+        console.log(`[Plaid Sync] Upserting ${toUpsert.length} of ${allTransactions.length} transactions (${allTransactions.length - toUpsert.length} filtered)`);
+
         if (toUpsert.length > 0) {
-          await supabase
+          const { error: upsertError } = await supabase
             .from('transactions')
             .upsert(toUpsert, { onConflict: 'plaid_transaction_id' });
+          if (upsertError) console.error('[Plaid Sync] Upsert error:', upsertError.message);
         }
 
         // Update cursor in db
@@ -188,7 +199,7 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
           .eq('id', connection.id);
 
       } catch (err: any) {
-        console.error('Error during Plaid sync:', err?.response?.data || err);
+        console.error('[Plaid Sync] Error:', err?.response?.data || err);
         hasMore = false; // Stop on error
       }
     }
