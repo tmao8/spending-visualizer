@@ -7,24 +7,42 @@ import { useRouter } from 'next/navigation'
 
 export function ForceResyncButton() {
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [status, setStatus] = useState<string | null>(null)
+  const [isError, setIsError] = useState(false)
   const router = useRouter()
 
   const handleResync = async () => {
     setLoading(true)
-    setSuccess(false)
-    try {
-      // 1. Reset the cursor in the database
-      await forceResync()
+    setStatus('Clearing old data...')
+    setIsError(false)
 
-      // 2. Trigger the Plaid sync route to rebuild history
-      await fetch('/api/plaid/sync', { method: 'POST' })
-      
-      setSuccess(true)
+    try {
+      // Step 1: Reset cursor and delete all transactions
+      const result = await forceResync()
+      if (!result.success) {
+        setStatus(`Error: ${result.message}`)
+        setIsError(true)
+        return
+      }
+      setStatus(result.message + ' Syncing from Plaid...')
+
+      // Step 2: Trigger the Plaid sync to rebuild all history
+      const syncResponse = await fetch('/api/plaid/sync', { method: 'POST' })
+      const syncData = await syncResponse.json()
+
+      if (!syncResponse.ok) {
+        setStatus(`Sync failed: ${syncData.error || syncResponse.statusText}`)
+        setIsError(true)
+        return
+      }
+
+      setStatus('✓ Full resync complete! Refreshing...')
       router.refresh()
-      setTimeout(() => setSuccess(false), 3000)
-    } catch (err) {
-      console.error('Failed to force resync', err)
+      setTimeout(() => setStatus(null), 5000)
+    } catch (err: any) {
+      setStatus(`Error: ${err.message}`)
+      setIsError(true)
+      console.error('Force resync failed:', err)
     } finally {
       setLoading(false)
     }
@@ -38,10 +56,15 @@ export function ForceResyncButton() {
         className="px-6 py-3 rounded-full bg-black text-white text-sm font-bold hover:bg-gray-800 disabled:bg-gray-300 transition-colors flex items-center gap-2"
       >
         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        {loading ? 'Rebuilding History...' : success ? 'Sync Complete!' : 'Force Full Resync'}
+        {loading ? 'Rebuilding...' : 'Force Full Resync'}
       </button>
-      <p className="text-[12px] text-gray-400 font-medium mt-3 max-w-sm leading-relaxed">
-        This will wipe your Plaid sync memory and refetch all historical transactions from scratch. Use this if your dashboard is missing refunds or showing duplicate pending transactions.
+      {status && (
+        <p className={`text-[12px] font-bold mt-3 max-w-sm leading-relaxed ${isError ? 'text-red-500' : 'text-green-600'}`}>
+          {status}
+        </p>
+      )}
+      <p className="text-[12px] text-gray-400 font-medium mt-2 max-w-sm leading-relaxed">
+        Deletes all transactions and re-downloads your full history from Plaid. Use this to fix stuck pending labels, duplicates, or missing refunds.
       </p>
     </div>
   )
