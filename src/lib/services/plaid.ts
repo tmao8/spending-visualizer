@@ -17,7 +17,8 @@ export const createLinkToken = async (userId: string) => {
   const request = {
     user: { client_user_id: userId },
     client_name: 'Clarity',
-    products: ['transactions', 'liabilities'] as any,
+    products: ['transactions'] as any,
+    optional_products: ['liabilities'] as any,
     country_codes: ['US'] as any,
     language: 'en',
     transactions: {
@@ -243,15 +244,16 @@ export interface CreditCardLiability {
   creditLimit: number | null;
 }
 
-export const getLiabilities = async (supabase: SupabaseClient, userId: string): Promise<CreditCardLiability[]> => {
+export const getLiabilities = async (supabase: SupabaseClient, userId: string): Promise<{ data: CreditCardLiability[]; error: string | null }> => {
   const { data: connections } = await supabase
     .from('plaid_connections')
     .select('*')
     .eq('user_id', userId);
 
-  if (!connections) return [];
+  if (!connections || connections.length === 0) return { data: [], error: 'No bank connections found. Link a bank in Settings.' };
 
   const allLiabilities: CreditCardLiability[] = [];
+  let lastError: string | null = null;
 
   for (const connection of connections) {
     try {
@@ -289,14 +291,17 @@ export const getLiabilities = async (supabase: SupabaseClient, userId: string): 
         });
       }
     } catch (e: any) {
-      console.error('[Plaid] Error fetching liabilities:', e?.response?.data || e.message);
+      const plaidError = e?.response?.data;
+      lastError = plaidError?.error_message || plaidError?.error_code || e.message || 'Unknown error';
+      console.error('[Plaid] Error fetching liabilities:', plaidError || e.message);
     }
   }
 
-  return allLiabilities.sort((a, b) => {
-    // Sort by next payment due date (soonest first)
+  const sorted = allLiabilities.sort((a, b) => {
     if (!a.nextPaymentDueDate) return 1;
     if (!b.nextPaymentDueDate) return -1;
     return new Date(a.nextPaymentDueDate).getTime() - new Date(b.nextPaymentDueDate).getTime();
   });
+
+  return { data: sorted, error: allLiabilities.length === 0 ? lastError : null };
 };

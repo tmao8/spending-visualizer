@@ -29,7 +29,7 @@ export default async function PaymentsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return redirect('/login')
 
-  const liabilities = await getLiabilities(supabase, user.id)
+  const { data: liabilities, error } = await getLiabilities(supabase, user.id)
 
   const totalOwed = liabilities.reduce((sum, card) => sum + card.currentBalance, 0)
   const totalStatementBalance = liabilities.reduce((sum, card) => sum + (card.lastStatementBalance || 0), 0)
@@ -47,9 +47,9 @@ export default async function PaymentsPage() {
         {liabilities.length === 0 ? (
           <div className="text-center py-20">
             <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-lg font-black text-black mb-2">No credit card data yet</h2>
-            <p className="text-sm text-gray-400 font-medium max-w-sm mx-auto">
-              Re-link your bank accounts in Settings to enable the liabilities product, then your payment deadlines and statement balances will appear here.
+            <h2 className="text-lg font-black text-black mb-2">No credit card liabilities found</h2>
+            <p className="text-sm text-gray-400 font-medium max-w-md mx-auto">
+              {error ? `Plaid Status: ${error}` : 'No credit card account data was returned by your linked bank accounts.'}
             </p>
           </div>
         ) : (
