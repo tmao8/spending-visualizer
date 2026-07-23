@@ -17,7 +17,7 @@ export const createLinkToken = async (userId: string) => {
   const request = {
     user: { client_user_id: userId },
     client_name: 'Clarity',
-    products: ['transactions'] as any,
+    products: ['transactions', 'liabilities'] as any,
     country_codes: ['US'] as any,
     language: 'en',
     transactions: {
@@ -229,4 +229,74 @@ export const getBalances = async (supabase: SupabaseClient, userId: string) => {
     type: acc.type,
     subtype: acc.subtype
   }));
+};
+
+export interface CreditCardLiability {
+  accountName: string;
+  currentBalance: number;
+  lastStatementBalance: number | null;
+  lastStatementDate: string | null;
+  minimumPayment: number | null;
+  nextPaymentDueDate: string | null;
+  lastPaymentAmount: number | null;
+  lastPaymentDate: string | null;
+  creditLimit: number | null;
+}
+
+export const getLiabilities = async (supabase: SupabaseClient, userId: string): Promise<CreditCardLiability[]> => {
+  const { data: connections } = await supabase
+    .from('plaid_connections')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (!connections) return [];
+
+  const allLiabilities: CreditCardLiability[] = [];
+
+  for (const connection of connections) {
+    try {
+      // Get account names
+      const accountsResponse = await plaidClient.accountsGet({
+        access_token: connection.access_token
+      });
+      const accountsMap: Record<string, { name: string; balance: number; limit: number | null }> = {};
+      accountsResponse.data.accounts.forEach(acc => {
+        accountsMap[acc.account_id] = {
+          name: acc.name,
+          balance: acc.balances.current || 0,
+          limit: acc.balances.limit || null
+        };
+      });
+
+      // Get liabilities
+      const response = await plaidClient.liabilitiesGet({
+        access_token: connection.access_token
+      });
+
+      const creditCards = response.data.liabilities.credit || [];
+      for (const card of creditCards) {
+        const account = (card.account_id ? accountsMap[card.account_id] : null) || { name: 'Unknown Card', balance: 0, limit: null };
+        allLiabilities.push({
+          accountName: account.name,
+          currentBalance: account.balance,
+          lastStatementBalance: card.last_statement_balance ?? null,
+          lastStatementDate: card.last_statement_issue_date ?? null,
+          minimumPayment: card.minimum_payment_amount ?? null,
+          nextPaymentDueDate: card.next_payment_due_date ?? null,
+          lastPaymentAmount: card.last_payment_amount ?? null,
+          lastPaymentDate: card.last_payment_date ?? null,
+          creditLimit: account.limit,
+        });
+      }
+    } catch (e: any) {
+      console.error('[Plaid] Error fetching liabilities:', e?.response?.data || e.message);
+    }
+  }
+
+  return allLiabilities.sort((a, b) => {
+    // Sort by next payment due date (soonest first)
+    if (!a.nextPaymentDueDate) return 1;
+    if (!b.nextPaymentDueDate) return -1;
+    return new Date(a.nextPaymentDueDate).getTime() - new Date(b.nextPaymentDueDate).getTime();
+  });
 };

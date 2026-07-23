@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ReceiptText, TrendingUp, Settings, Sparkles, PiggyBank } from 'lucide-react'
+import { LayoutDashboard, ReceiptText, TrendingUp, Settings, Sparkles, PiggyBank, CalendarClock } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/dashboard/transactions', label: 'Transactions', icon: ReceiptText },
   { href: '/dashboard/budgets', label: 'Budgets', icon: PiggyBank },
   { href: '/dashboard/trends', label: 'Trends', icon: TrendingUp },
+  { href: '/dashboard/payments', label: 'Payments', icon: CalendarClock },
 ]
 
 export function Sidebar() {
