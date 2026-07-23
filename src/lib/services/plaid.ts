@@ -150,21 +150,19 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
           else console.log(`[Plaid Sync] Deleted ${allIdsToRemove.length} replaced/removed transactions`);
         }
 
-        // Process added and modified together (Upsert)
-        const EXCLUDED_CATEGORIES = ['LOAN_PAYMENTS', 'TRANSFER_IN', 'TRANSFER_OUT', 'INCOME', 'RENT_AND_MORTGAGES'];
-        const PAYMENT_KEYWORDS = ['payment', 'pmt', 'autopay', 'thank you'];
+        // Only filter out credit card bill payments — everything else
+        // (refunds, credits, rewards, transfers) gets included
+        const EXCLUDED_CATEGORIES = ['LOAN_PAYMENTS'];
         
         const allTransactions = [...added, ...modified];
         const toUpsert = allTransactions
           .filter(t => {
             const isExcludedCategory = EXCLUDED_CATEGORIES.includes(t.personal_finance_category?.primary || '');
-            const merchant = (t.merchant_name || t.name || '').toLowerCase();
-            const isLikelyPayment = t.amount < 0 && PAYMENT_KEYWORDS.some(k => merchant.includes(k));
             
-            if (isExcludedCategory || isLikelyPayment) {
+            if (isExcludedCategory) {
               console.log(`[Plaid Sync] Filtered out: "${t.merchant_name || t.name}" amount=${t.amount} category=${t.personal_finance_category?.primary} pending=${t.pending}`);
             }
-            return !isExcludedCategory && !isLikelyPayment;
+            return !isExcludedCategory;
           })
           .map(t => {
           const merchant = t.merchant_name || t.name || 'Unknown';

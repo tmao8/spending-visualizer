@@ -23,9 +23,11 @@ export function PlaidSyncManager() {
     sync();
   }, [router]);
 
+  if (!syncing) return null;
+
   return (
-    <div className={`flex items-center text-xs font-semibold text-gray-500 transition-opacity duration-300 ${syncing ? 'opacity-100' : 'opacity-0'}`}>
-      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+    <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50 flex items-center gap-2 px-4 py-2.5 bg-black text-white rounded-full shadow-lg text-xs font-bold tracking-wide animate-pulse">
+      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
       Syncing...
     </div>
   );
