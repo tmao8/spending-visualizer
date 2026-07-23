@@ -6,7 +6,8 @@ import { CreditCard, CalendarClock, AlertTriangle, CheckCircle2 } from 'lucide-r
 
 export const dynamic = 'force-dynamic'
 
-function getDueStatus(dueDate: string | null): { label: string; color: string; icon: any; urgent: boolean } {
+function getDueStatus(dueDate: string | null, minPayment: number | null): { label: string; color: string; icon: any; urgent: boolean } {
+  if (minPayment === 0) return { label: 'Paid / Up to date', color: 'text-green-500', icon: CheckCircle2, urgent: false }
   if (!dueDate) return { label: 'No due date', color: 'text-gray-400', icon: CalendarClock, urgent: false }
   
   const due = new Date(dueDate + 'T00:00:00')
@@ -73,7 +74,7 @@ export default async function PaymentsPage() {
             {/* Card Details */}
             <div className="space-y-4">
               {liabilities.map((card, i) => {
-                const status = getDueStatus(card.nextPaymentDueDate)
+                const status = getDueStatus(card.nextPaymentDueDate, card.minimumPayment)
                 const StatusIcon = status.icon
                 const utilization = card.creditLimit ? (card.currentBalance / card.creditLimit) * 100 : null
 
