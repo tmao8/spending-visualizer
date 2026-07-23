@@ -39,6 +39,8 @@ export function TrendsView({
   const weekOffset = Number(searchParams.get('weekOffset') || 0)
   const monthOffset = Number(searchParams.get('monthOffset') || 0)
   const yearOffset = Number(searchParams.get('yearOffset') || 0)
+  const exactStart = searchParams.get('start') || undefined
+  const exactEnd = searchParams.get('end') || undefined
   
   const filter: FilterOptions = {
     card: searchParams.get('card') || undefined,
@@ -50,6 +52,13 @@ export function TrendsView({
 
   const updateParams = (newParams: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString())
+    
+    // When changing timeframe or navigating, clear exact dates unless explicitly provided
+    if (newParams.timeframe || newParams.weekOffset || newParams.monthOffset || newParams.yearOffset) {
+      if (!newParams.start) params.delete('start')
+      if (!newParams.end) params.delete('end')
+    }
+    
     Object.entries(newParams).forEach(([key, value]) => {
       if (value === null) params.delete(key)
       else params.set(key, value)
@@ -72,6 +81,18 @@ export function TrendsView({
     startTransition(() => {
       router.push('/dashboard/trends')
     })
+  }
+  
+  const handleBarClick = ({ start, end }: { start: string, end: string }) => {
+    if (timeframe === 'yearly') {
+      updateParams({ timeframe: 'monthly', start, end })
+    } else if (timeframe === 'monthly') {
+      updateParams({ timeframe: 'weekly', start, end })
+    } else if (timeframe === 'weekly') {
+      // For weekly view, clicking a day should ideally just filter the list, or we could redirect to transactions.
+      // We will filter the RecentTransactions table by updating local state or URL
+      updateParams({ timeframe: 'weekly', start, end })
+    }
   }
   
   const totalPeriodSpend = activeData.trends.reduce((sum, d) => sum + d.amount, 0)
@@ -201,7 +222,7 @@ export function TrendsView({
                 </p>
               </div>
             </div>
-            <SpendingBarChart data={activeData.trends} />
+            <SpendingBarChart data={activeData.trends} onBarClick={handleBarClick} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

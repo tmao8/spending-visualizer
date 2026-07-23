@@ -12,6 +12,7 @@ import {
 
 interface SpendingBarChartProps {
   data: any[]
+  onBarClick?: (data: { start: string, end: string, originalData: any }) => void
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -58,12 +59,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function SpendingBarChart({ data }: SpendingBarChartProps) {
+export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
   // Find all unique categories present in the data for stacking
   const categories = Array.from(
     new Set(
       data.flatMap((d) => 
-        Object.keys(d).filter(key => key !== 'date' && key !== 'amount')
+        Object.keys(d).filter(key => key !== 'date' && key !== 'amount' && key !== 'fullDate' && key !== 'rangeStart' && key !== 'rangeEnd')
       )
     )
   )
@@ -71,7 +72,22 @@ export function SpendingBarChart({ data }: SpendingBarChartProps) {
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 0, right: -15, left: -20, bottom: 0 }}>
+        <BarChart 
+          data={data} 
+          margin={{ top: 0, right: -15, left: -20, bottom: 0 }}
+          onClick={(state) => {
+            if (state && state.activePayload && state.activePayload.length > 0 && onBarClick) {
+              const payload = state.activePayload[0].payload;
+              if (payload.rangeStart && payload.rangeEnd) {
+                onBarClick({
+                  start: payload.rangeStart,
+                  end: payload.rangeEnd,
+                  originalData: payload
+                });
+              }
+            }
+          }}
+        >
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
           <XAxis 
             dataKey="date" 
@@ -87,7 +103,7 @@ export function SpendingBarChart({ data }: SpendingBarChartProps) {
             tickFormatter={(value) => `$${value}`}
           />
           <Tooltip 
-            cursor={{ fill: '#f9fafb' }}
+            cursor={{ fill: '#f9fafb', cursor: onBarClick ? 'pointer' : 'default' }}
             content={<CustomTooltip />}
           />
           {categories.map((cat) => (
@@ -97,6 +113,7 @@ export function SpendingBarChart({ data }: SpendingBarChartProps) {
               stackId="a" 
               fill={CATEGORY_COLORS[cat] || 'transparent'} 
               radius={[0, 0, 0, 0]}
+              cursor={onBarClick ? 'pointer' : 'default'}
             />
           ))}
         </BarChart>

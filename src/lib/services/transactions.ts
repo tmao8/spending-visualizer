@@ -167,10 +167,18 @@ export async function getMonthlyTotal(supabase: SupabaseClient) {
   })
 }
 
-export async function getDailySpending(supabase: SupabaseClient, days: number = 30, weekOffset: number = 0, filter?: FilterOptions, groupDays: number = 1, alignment: 'day' | 'week' = 'day') {
-  const baseDate = alignment === 'week' ? subWeeks(new Date(), weekOffset) : subDays(new Date(), weekOffset * 7)
-  const startDateObj = alignment === 'week' ? startOfWeek(baseDate, { weekStartsOn: 1 }) : subDays(baseDate, days - 1)
-  const endDateObj = alignment === 'week' ? endOfWeek(baseDate, { weekStartsOn: 1 }) : baseDate
+export async function getDailySpending(supabase: SupabaseClient, days: number = 30, weekOffset: number = 0, filter?: FilterOptions, groupDays: number = 1, alignment: 'day' | 'week' = 'day', exactStart?: string, exactEnd?: string) {
+  let startDateObj = new Date();
+  let endDateObj = new Date();
+
+  if (exactStart && exactEnd) {
+    startDateObj = new Date(exactStart);
+    endDateObj = new Date(exactEnd);
+  } else {
+    const baseDate = alignment === 'week' ? subWeeks(new Date(), weekOffset) : subDays(new Date(), weekOffset * 7)
+    startDateObj = alignment === 'week' ? startOfWeek(baseDate, { weekStartsOn: 1 }) : subDays(baseDate, days - 1)
+    endDateObj = alignment === 'week' ? endOfWeek(baseDate, { weekStartsOn: 1 }) : baseDate
+  }
   
   const startDate = startOfDay(startDateObj).toISOString()
   const endDate = endOfDay(endDateObj).toISOString()
@@ -201,10 +209,16 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     const dateInterval = eachDayOfInterval({ start: startDateObj, end: endDateObj })
     dateInterval.forEach(date => {
       const dayStr = format(date, 'yyyy-MM-dd')
-      const label = alignment === 'week' ? format(date, 'EEE') : format(date, 'd')
+      const label = alignment === 'week' && (!exactStart) ? format(date, 'EEE') : format(date, 'd')
       const fullDate = format(date, 'MMM dd')
       
-      const dayData: any = { date: label, fullDate, amount: 0 }
+      const dayData: any = { 
+        date: label, 
+        fullDate, 
+        amount: 0,
+        rangeStart: startOfDay(date).toISOString(),
+        rangeEnd: endOfDay(date).toISOString()
+      }
       filteredData.forEach(t => {
         if (getCalendarDay(t.created_at) === dayStr) {
           const cat = t.category || categorizeMerchant(t.merchant)
@@ -217,16 +231,26 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
   } else {
     // Grouped view (e.g. 5-day increments for Home)
     for (let i = 0; i < days; i += groupDays) {
-      const endGroupDate = subDays(baseDate, i)
+      const endGroupDate = subDays(endDateObj, i) // Use endDateObj as base for grouping instead of baseDate to be exact with exactStart/End
       const startGroupDate = subDays(endGroupDate, groupDays - 1)
-      const label = `${format(startGroupDate, 'd')}-${format(endGroupDate, 'd')}`
-      const fullDate = `${format(startGroupDate, 'MMM dd')} - ${format(endGroupDate, 'MMM dd')}`
       
-      const groupData: any = { date: label, fullDate, amount: 0 }
+      // If we go past the startDateObj, cap it so we don't fetch outside the exact date range
+      const actualStartGroupDate = startGroupDate < startDateObj ? startDateObj : startGroupDate;
+      
+      const label = `${format(actualStartGroupDate, 'd')}-${format(endGroupDate, 'd')}`
+      const fullDate = `${format(actualStartGroupDate, 'MMM dd')} - ${format(endGroupDate, 'MMM dd')}`
+      
+      const groupData: any = { 
+        date: label, 
+        fullDate, 
+        amount: 0,
+        rangeStart: startOfDay(actualStartGroupDate).toISOString(),
+        rangeEnd: endOfDay(endGroupDate).toISOString()
+      }
       
       filteredData.forEach(t => {
         const tDate = new Date(getCalendarDay(t.created_at) + 'T00:00:00') // Treat as local time
-        if (tDate >= startOfDay(startGroupDate) && tDate <= endOfDay(endGroupDate)) {
+        if (tDate >= startOfDay(actualStartGroupDate) && tDate <= endOfDay(endGroupDate)) {
           const cat = t.category || categorizeMerchant(t.merchant)
           groupData.amount += Number(t.amount)
           groupData[cat] = (groupData[cat] || 0) + Number(t.amount)
@@ -287,14 +311,18 @@ export async function getFirstTransactionDate(supabase: SupabaseClient) {
   })
 }
 
-export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: number = 0, filter?: FilterOptions) {
-  const baseDate = subWeeks(new Date(), weekOffset)
-  const startDate = startOfDay(startOfWeek(baseDate, { weekStartsOn: 1 })).toISOString()
-  const endDate = endOfDay(endOfWeek(baseDate, { weekStartsOn: 1 })).toISOString()
+export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: number = 0, filter?: FilterOptions, exactStart?: string, exactEnd?: string) {
+  let startDate = exactStart ? startOfDay(new Date(exactStart)).toISOString() : '';
+  let endDate = exactEnd ? endOfDay(new Date(exactEnd)).toISOString() : '';
 
-  
+  if (!exactStart || !exactEnd) {
+    const baseDate = subWeeks(new Date(), weekOffset)
+    startDate = startOfDay(startOfWeek(baseDate, { weekStartsOn: 1 })).toISOString()
+    endDate = endOfDay(endOfWeek(baseDate, { weekStartsOn: 1 })).toISOString()
+  }
+
   const [trends, categories, firstDate, transactions] = await Promise.all([
-    getDailySpending(supabase, 7, weekOffset, filter, 1, 'week'),
+    getDailySpending(supabase, 7, weekOffset, filter, 1, 'week', exactStart, exactEnd),
     getCategorySpendingForRange(supabase, startDate, endDate, filter),
     getFirstTransactionDate(supabase),
     getTransactionsForRange(supabase, startDate, endDate, filter)
@@ -302,10 +330,15 @@ export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: nu
   return { trends, categories, transactions, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
-export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOffset: number = 0, filter?: FilterOptions) {
-  const baseDate = subMonths(new Date(), monthOffset)
-  const startDate = startOfMonth(baseDate).toISOString()
-  const endDate = endOfMonth(baseDate).toISOString()
+export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOffset: number = 0, filter?: FilterOptions, exactStart?: string, exactEnd?: string) {
+  let startDate = exactStart ? startOfDay(new Date(exactStart)).toISOString() : '';
+  let endDate = exactEnd ? endOfDay(new Date(exactEnd)).toISOString() : '';
+  
+  if (!exactStart || !exactEnd) {
+    const baseDate = subMonths(new Date(), monthOffset)
+    startDate = startOfMonth(baseDate).toISOString()
+    endDate = endOfMonth(baseDate).toISOString()
+  }
   
   let query = supabase
     .from('transactions')
@@ -342,7 +375,13 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
     const label = `${format(startGroupDate, 'd')}-${format(endGroupDate, 'd')}`
     const fullDate = `${format(startGroupDate, 'MMM d')} - ${format(endGroupDate, 'MMM d')}`
     
-    const groupData: any = { date: label, fullDate, amount: 0 }
+    const groupData: any = { 
+      date: label, 
+      fullDate, 
+      amount: 0,
+      rangeStart: startOfDay(startGroupDate).toISOString(),
+      rangeEnd: endOfDay(endGroupDate).toISOString()
+    }
     
     const groupDaysSlice = daysInMonth.slice(i, i + groupDays).map(d => format(d, 'yyyy-MM-dd'))
 
@@ -395,7 +434,13 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
     const monthPrefix = format(month, 'yyyy-MM')
     const label = format(month, 'MMM')
     const fullDate = format(month, 'MMMM yyyy')
-    const monthData: any = { date: label, fullDate, amount: 0 }
+    const monthData: any = { 
+      date: label, 
+      fullDate, 
+      amount: 0,
+      rangeStart: startOfMonth(month).toISOString(),
+      rangeEnd: endOfMonth(month).toISOString()
+    }
     
     filteredData.forEach(t => {
       if (getCalendarDay(t.created_at).startsWith(monthPrefix)) {

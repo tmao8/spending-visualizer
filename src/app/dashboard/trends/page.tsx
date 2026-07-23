@@ -31,6 +31,8 @@ async function TrendsContent({ searchParams }: { searchParams: Promise<any> }) {
   const weekOffset = Number(params.weekOffset || 0)
   const monthOffset = Number(params.monthOffset || 0)
   const yearOffset = Number(params.yearOffset || 0)
+  const exactStart = params.start || undefined
+  const exactEnd = params.end || undefined
   
   const filter: FilterOptions = {
     card: params.card || undefined,
@@ -39,8 +41,8 @@ async function TrendsContent({ searchParams }: { searchParams: Promise<any> }) {
 
   // Fetch trend data in parallel based on filters
   const [weekly, monthly, yearly, cardData] = await Promise.all([
-    getWeeklySpending(supabase, weekOffset, filter),
-    getMonthlySpendingTrend(supabase, monthOffset, filter),
+    getWeeklySpending(supabase, weekOffset, filter, exactStart, exactEnd),
+    getMonthlySpendingTrend(supabase, monthOffset, filter, exactStart, exactEnd),
     getYearlySpending(supabase, yearOffset, filter),
     getSpendingByCard(supabase, filter),
   ])
