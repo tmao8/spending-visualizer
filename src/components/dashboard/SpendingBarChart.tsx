@@ -112,8 +112,11 @@ export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
               dataKey={cat} 
               stackId="a" 
               fill={CATEGORY_COLORS[cat] || 'transparent'} 
-              radius={[0, 0, 0, 0]}
+              radius={[4, 4, 4, 4]}
+              stroke="#ffffff"
+              strokeWidth={2}
               cursor={onBarClick ? 'pointer' : 'default'}
+              activeBar={{ stroke: '#000000', strokeWidth: 2 }}
             />
           ))}
         </BarChart>

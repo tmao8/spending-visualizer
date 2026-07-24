@@ -13,7 +13,7 @@ import {
   getHistoricalMonthlyAverage,
 } from '@/lib/services/transactions'
 import { subDays, startOfDay, endOfDay } from 'date-fns'
-import { SpendingBarChart } from '@/components/dashboard/SpendingBarChart'
+import { OverviewSpendingChart } from '@/components/dashboard/OverviewSpendingChart'
 import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Last 30 Days</span>
               </div>
               <div className="bg-gray-50/50 rounded-3xl p-8 border border-gray-100">
-                <SpendingBarChart data={dailySpending} />
+                <OverviewSpendingChart data={dailySpending} />
               </div>
             </section>
 
