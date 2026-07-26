@@ -33,7 +33,7 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        <section className="bg-gray-50 rounded-3xl border border-gray-100 dark:border-white/10 p-10">
+        <section className="bg-gray-50 dark:bg-neutral-900 rounded-3xl border border-gray-100 dark:border-white/10 p-10">
           <h2 className="text-xl font-black tracking-tight text-black dark:text-white mb-2">Account</h2>
           <p className="text-sm font-medium text-gray-500 mb-8">Manage your active session.</p>
           <form action={signOut}>

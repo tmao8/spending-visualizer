@@ -90,7 +90,7 @@ export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
             tickFormatter={(value) => `$${value}`}
           />
           <Tooltip 
-            cursor={{ fill: '#f9fafb', cursor: onBarClick ? 'pointer' : 'default' }}
+            cursor={false}
             content={<CustomTooltip />}
           />
           {categories.map((cat) => (

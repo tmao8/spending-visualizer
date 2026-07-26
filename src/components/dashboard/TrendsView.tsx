@@ -110,7 +110,7 @@ export function TrendsView({
     <div className="space-y-12">
       {/* Timeframe Selector & Navigation */}
       <div className="flex flex-col items-center gap-6">
-        <div className="flex items-center justify-center p-1 bg-gray-100 rounded-2xl w-fit">
+        <div className="flex items-center justify-center p-1 bg-gray-100 dark:bg-white/10 rounded-2xl w-fit">
           {(['weekly', 'monthly', 'yearly'] as const).map((t) => (
             <button
               key={t}
@@ -128,7 +128,7 @@ export function TrendsView({
           <button 
             onClick={() => handleNav(1)}
             disabled={isPending}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-black dark:text-white hover:bg-gray-100 transition-all disabled:opacity-50"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900 text-gray-400 hover:text-black dark:text-white hover:bg-gray-100 transition-all disabled:opacity-50"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -165,7 +165,7 @@ export function TrendsView({
           <button 
             onClick={() => handleNav(-1)}
             disabled={isPending || currentOffset === 0}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-black dark:text-white hover:bg-gray-100 transition-all disabled:opacity-50"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900 text-gray-400 hover:text-black dark:text-white hover:bg-gray-100 transition-all disabled:opacity-50"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -206,9 +206,9 @@ export function TrendsView({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-12">
-          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 dark:border-white/10 relative overflow-hidden">
+          <div className="bg-gray-50/50 dark:bg-neutral-900/50 rounded-3xl p-10 border border-gray-100 dark:border-white/10 relative overflow-hidden">
             {isPending && (
-              <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px] z-10 flex items-center justify-center" />
+              <div className="absolute inset-0 bg-white dark:bg-[#0a0a0a]/10 backdrop-blur-[1px] z-10 flex items-center justify-center" />
             )}
             <div className="mb-8 flex items-start justify-between">
               <div>
@@ -249,7 +249,7 @@ export function TrendsView({
         </div>
 
         <div className="space-y-8">
-          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 dark:border-white/10">
+          <div className="bg-gray-50/50 dark:bg-neutral-900/50 rounded-3xl p-10 border border-gray-100 dark:border-white/10">
             <div className="mb-8">
               <h3 className="text-xl font-black tracking-tight text-black dark:text-white capitalize">Categories ({timeframe})</h3>
             </div>

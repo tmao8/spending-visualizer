@@ -9,10 +9,10 @@ function LoginForm() {
   const error = searchParams.get('error')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0a] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-sm w-full space-y-12">
         <div className="text-center">
-          <h2 className="text-4xl font-bold tracking-tight text-black">
+          <h2 className="text-4xl font-bold tracking-tight text-black dark:text-white">
             Clarity
           </h2>
           <p className="mt-3 text-sm text-gray-500 font-medium">
@@ -27,7 +27,7 @@ function LoginForm() {
                 name="email"
                 type="email"
                 required
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent sm:text-sm bg-gray-50/50"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent sm:text-sm bg-gray-50/50 dark:bg-neutral-900/50"
                 placeholder="Email address"
               />
             </div>
@@ -37,7 +37,7 @@ function LoginForm() {
                 name="password"
                 type="password"
                 required
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent sm:text-sm bg-gray-50/50"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent sm:text-sm bg-gray-50/50 dark:bg-neutral-900/50"
                 placeholder="Password"
               />
             </div>

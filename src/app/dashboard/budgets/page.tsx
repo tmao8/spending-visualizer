@@ -42,7 +42,7 @@ export default async function BudgetsPage() {
           {/* Budgets Column */}
           <div className="space-y-8">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-neutral-900 flex items-center justify-center">
                 <Target className="w-5 h-5 text-gray-400" />
               </div>
               <div>
@@ -57,7 +57,7 @@ export default async function BudgetsPage() {
           <div className="space-y-8">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-neutral-900 flex items-center justify-center">
                   <RotateCw className="w-5 h-5 text-gray-400" />
                 </div>
                 <div>

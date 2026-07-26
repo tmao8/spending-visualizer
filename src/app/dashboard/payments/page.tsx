@@ -57,15 +57,15 @@ export default async function PaymentsPage() {
           <>
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="bg-gray-50 rounded-2xl p-6">
+              <div className="bg-gray-50 dark:bg-neutral-900 rounded-2xl p-6">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Owed</p>
                 <p className="text-2xl font-black text-black dark:text-white">${totalOwed.toFixed(2)}</p>
               </div>
-              <div className="bg-gray-50 rounded-2xl p-6">
+              <div className="bg-gray-50 dark:bg-neutral-900 rounded-2xl p-6">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Statement Balance</p>
                 <p className="text-2xl font-black text-black dark:text-white">${totalStatementBalance.toFixed(2)}</p>
               </div>
-              <div className="bg-gray-50 rounded-2xl p-6">
+              <div className="bg-gray-50 dark:bg-neutral-900 rounded-2xl p-6">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Min Payment Due</p>
                 <p className="text-2xl font-black text-black dark:text-white">${totalMinPayment.toFixed(2)}</p>
               </div>
@@ -134,7 +134,7 @@ export default async function PaymentsPage() {
                             {utilization.toFixed(0)}%
                           </p>
                         </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${utilization > 70 ? 'bg-red-400' : utilization > 30 ? 'bg-amber-400' : 'bg-green-400'}`}
                             style={{ width: `${Math.min(utilization, 100)}%` }}

@@ -56,11 +56,11 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsEditing(!isEditing)}
-            className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 rounded-full bg-gray-50 dark:bg-neutral-900 flex items-center justify-center hover:bg-gray-100 transition-colors"
           >
             {isEditing ? <X className="w-4 h-4 text-gray-400" /> : <Pencil className="w-4 h-4 text-gray-400" />}
           </button>
-          <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-neutral-900 flex items-center justify-center">
             <Target className="w-5 h-5 text-gray-300" />
           </div>
         </div>
@@ -88,7 +88,7 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
                   )}
                 </div>
                 <div className="text-right">
-                  <span className={`text-sm font-bold ${isOver ? 'text-red-500' : 'text-black'}`}>
+                  <span className={`text-sm font-bold ${isOver ? 'text-red-500' : 'text-black dark:text-white'}`}>
                     ${spent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                   <span className="text-xs text-gray-400 font-medium ml-1">
@@ -96,9 +96,9 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
                   </span>
                 </div>
               </div>
-              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 ${isOver ? 'bg-red-500' : percentage >= 80 ? 'bg-amber-500' : 'bg-black'} ${isPending ? 'opacity-50' : ''}`}
+                  className={`h-full rounded-full transition-all duration-500 ${isOver ? 'bg-red-500' : percentage >= 80 ? 'bg-amber-500' : 'bg-black dark:bg-white'} ${isPending ? 'opacity-50' : ''}`}
                   style={{ width: `${percentage}%` }}
                 />
               </div>
@@ -112,7 +112,7 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
       </div>
 
       {isEditing && (
-        <div className="mt-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 dark:border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="mt-8 p-4 bg-gray-50 dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
           <h5 className="text-xs font-bold text-black dark:text-white uppercase tracking-widest mb-3">Add / Update Budget</h5>
           
           {errorMsg && (

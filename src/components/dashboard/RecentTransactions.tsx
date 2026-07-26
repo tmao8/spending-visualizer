@@ -126,7 +126,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
         <div className="px-6 py-4 border-t border-gray-100 dark:border-white/10 mt-auto">
           <button
             onClick={() => setDisplayCount(prev => prev + 25)}
-            className="w-full py-2 flex items-center justify-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-neutral-800 rounded-xl transition-all"
+            className="w-full py-2 flex items-center justify-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest hover:text-black dark:hover:text-white hover:bg-gray-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 rounded-xl transition-all"
           >
             Show More <ChevronDown className="w-4 h-4" />
           </button>

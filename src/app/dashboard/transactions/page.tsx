@@ -67,13 +67,13 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
               {page > 1 ? (
                 <Link
                   href={buildUrl(page - 1)}
-                  className="flex items-center gap-1 px-4 py-2 rounded-full bg-gray-50 text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-1 px-4 py-2 rounded-full bg-gray-50 dark:bg-neutral-900 text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </Link>
               ) : (
-                <span className="flex items-center gap-1 px-4 py-2 rounded-full bg-gray-50 text-sm font-bold text-gray-300 cursor-not-allowed">
+                <span className="flex items-center gap-1 px-4 py-2 rounded-full bg-gray-50 dark:bg-neutral-900 text-sm font-bold text-gray-300 cursor-not-allowed">
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </span>
