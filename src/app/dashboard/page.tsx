@@ -10,10 +10,8 @@ import {
   getRecentTransactions,
   getSpendingByCategory,
   getSpendingByCard,
-  getHistoricalMonthlyAverage,
-  getSubscriptions
+  getHistoricalMonthlyAverage
 } from '@/lib/services/transactions'
-import { getBalances } from '@/lib/services/plaid'
 import { subDays, startOfDay, endOfDay } from 'date-fns'
 import { OverviewSpendingChart } from '@/components/dashboard/OverviewSpendingChart'
 import { MerchantPieChart } from '@/components/dashboard/MerchantPieChart'
@@ -21,7 +19,6 @@ import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { SpendingByCard } from '@/components/dashboard/SpendingByCard'
 import { CardBalances } from '@/components/dashboard/CardBalances'
 import { NumberTicker } from '@/components/dashboard/NumberTicker'
-import { SubscriptionSentinel } from '@/components/dashboard/SubscriptionSentinel'
 import { AIRoastWidget } from '@/components/dashboard/AIRoastWidget'
 import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
 
@@ -41,15 +38,13 @@ export default async function DashboardPage() {
   const endDate = endOfDay(new Date()).toISOString()
 
   // Fetch data in parallel
-  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage, subscriptions, balances] = await Promise.all([
+  const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage] = await Promise.all([
     getMonthlyTotal(supabase),
     getDailySpending(supabase, 30, 0, undefined, 5, 'day'),
     getSpendingByCategory(supabase, undefined, startDate, endDate),
     getRecentTransactions(supabase),
     getSpendingByCard(supabase, undefined, startDate, endDate),
-    getHistoricalMonthlyAverage(supabase),
-    getSubscriptions(supabase),
-    getBalances(supabase, user.id)
+    getHistoricalMonthlyAverage(supabase)
   ])
 
   // Compute insight inline
@@ -117,8 +112,6 @@ export default async function DashboardPage() {
 
           {/* Sidebar Area (1/3 width) */}
           <div className="space-y-12">
-            <SubscriptionSentinel subscriptions={subscriptions} balances={balances} />
-
             <section className="bg-white dark:bg-black rounded-3xl p-8 border border-gray-100 dark:border-white/10 shadow-sm relative overflow-hidden group transition-transform hover:scale-[1.01] duration-300">
               <h3 className="text-lg font-bold text-black dark:text-white mb-4">By Category</h3>
               <div className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-black/[0.02] dark:from-white/[0.02] to-transparent pointer-events-none" />

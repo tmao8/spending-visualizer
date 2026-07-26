@@ -18,10 +18,9 @@ A clean, high-contrast dashboard for tracking personal spending, optimized for q
 - **AI Coaching:** A Next.js Server Action (`src/app/dashboard/actions/ai.ts`) leverages Gemini to analyze the user's spending habits over the last 30 days and provide a witty "Roast" and financial advice on the Dashboard.
 - **Data Fetching:** The dashboard (`src/app/dashboard/page.tsx`) and trends page (`src/app/dashboard/trends/page.tsx`) fetch data directly from Supabase using concurrent Server Components (`Promise.all`).
 - **Pagination & Performance:** Aggregation queries (e.g., `getDailySpending`) support `limit` and `page` parameters to prevent memory bloat, processed efficiently on the server.
-- **Service Layer:** `src/lib/services/transactions.ts` contains all logic for aggregations, trend calculations (e.g. `getSubscriptions`), and fetching activity. Shared constants (like category colors) are stored in `src/lib/constants.ts`.
+- **Service Layer:** `src/lib/services/transactions.ts` contains all logic for aggregations, trend calculations, and fetching activity. Shared constants (like category colors) are stored in `src/lib/constants.ts`.
 
 ## Key Features
-- **Subscription Sentinel:** A "Safe to Spend" metric that calculates total liquid cash (checking/savings from Plaid balances) minus upcoming predicted recurring subscriptions.
 - **AI Financial Coach:** A dynamic widget (`AIRoastWidget`) providing personalized feedback based on recent transactions.
 - **Budgeting System:** Includes division-by-zero guards, prevents zero/negative budgets, and utilizes an amber "warning zone" (80-100% of budget) in the progress UI.
 - **Dark Mode:** A fully integrated dark mode switch (`ThemeToggle`) that transforms the UI into a sleek, low-light optimized experience using `dark:` variants.
