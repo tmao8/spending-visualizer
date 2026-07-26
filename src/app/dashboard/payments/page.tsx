@@ -79,10 +79,10 @@ export default async function PaymentsPage() {
                 const utilization = card.creditLimit ? (card.currentBalance / card.creditLimit) * 100 : null
 
                 return (
-                  <div key={i} className={`bg-white rounded-2xl border p-6 ${status.urgent ? 'border-amber-200 shadow-sm' : 'border-gray-100'}`}>
+                  <div key={i} className={`bg-white dark:bg-black rounded-2xl border p-6 ${status.urgent ? 'border-amber-200 dark:border-amber-900/50 shadow-sm' : 'border-gray-100 dark:border-white/10'}`}>
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status.urgent ? 'bg-amber-50' : 'bg-gray-50'}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${status.urgent ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-50 dark:bg-white/5'}`}>
                           <CreditCard className={`w-5 h-5 ${status.urgent ? 'text-amber-500' : 'text-gray-400'}`} />
                         </div>
                         <div>

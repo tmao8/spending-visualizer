@@ -1,8 +1,8 @@
 'use client'
 
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -18,21 +18,25 @@ interface SpendingBarChartProps {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const total = payload[0].payload.amount;
-    const fullDateLabel = payload[0].payload.fullDate || label;
-    const items = payload.filter((entry: any) => entry.name !== 'amount' && entry.value > 0);
+    const dataObj = payload[0].payload;
+    const total = dataObj.amount;
+    const fullDateLabel = dataObj.fullDate || label;
+    
+    const categories = Object.keys(dataObj)
+      .filter(k => k !== 'date' && k !== 'fullDate' && k !== 'amount' && k !== 'rangeStart' && k !== 'rangeEnd' && dataObj[k] > 0)
+      .sort((a, b) => dataObj[b] - dataObj[a]);
     
     return (
       <div className="bg-white dark:bg-black p-4 rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 min-w-[200px]">
         <p className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest mb-3">{fullDateLabel}</p>
         <div className="space-y-2 mb-3">
-          {items.map((entry: any, index: number) => (
+          {categories.map((cat: string, index: number) => (
             <div key={index} className="flex justify-between items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                <span className="text-[12px] font-bold text-black dark:text-white/70">{entry.name}</span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat] || '#8338EC' }} />
+                <span className="text-[12px] font-bold text-black dark:text-white/70">{cat}</span>
               </div>
-              <span className="text-[12px] font-bold text-black dark:text-white">${Number(entry.value).toFixed(2)}</span>
+              <span className="text-[12px] font-bold text-black dark:text-white">${Number(dataObj[cat]).toFixed(2)}</span>
             </div>
           ))}
         </div>
@@ -47,21 +51,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
-  // Find all unique categories present in the data for stacking
-  const categories = Array.from(
-    new Set(
-      data.flatMap((d) => 
-        Object.keys(d).filter(key => key !== 'date' && key !== 'amount' && key !== 'fullDate' && key !== 'rangeStart' && key !== 'rangeEnd')
-      )
-    )
-  )
-
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart 
+        <AreaChart 
           data={data} 
-          margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+          margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
           onClick={(state) => {
             if (state && state.activePayload && state.activePayload.length > 0 && onBarClick) {
               const payload = state.activePayload[0].payload;
@@ -75,6 +70,12 @@ export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
             }
           }}
         >
+          <defs>
+            <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#8338EC" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="#8338EC" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.05} />
           <XAxis className="text-gray-400 dark:text-gray-500" 
             dataKey="date" 
@@ -90,22 +91,20 @@ export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
             tickFormatter={(value) => `$${value}`}
           />
           <Tooltip 
-            cursor={false}
+            cursor={{ stroke: 'currentColor', strokeWidth: 1, strokeOpacity: 0.1, strokeDasharray: '4 4' }}
             content={<CustomTooltip />}
+            isAnimationActive={false}
           />
-          {categories.map((cat) => (
-            <Bar 
-              key={cat}
-              dataKey={cat} 
-              stackId="a" 
-              fill={CATEGORY_COLORS[cat] || 'transparent'} 
-              radius={[4, 4, 4, 4]} stroke="transparent" strokeWidth={1}
-              
-              cursor={onBarClick ? 'pointer' : 'default'}
-              activeBar={{ fillOpacity: 0.8 }}
-            />
-          ))}
-        </BarChart>
+          <Area 
+            type="monotone" 
+            dataKey="amount" 
+            stroke="#8338EC" 
+            strokeWidth={3} 
+            fillOpacity={1} 
+            fill="url(#colorAmount)" 
+            activeDot={{ r: 6, fill: '#8338EC', stroke: '#fff', strokeWidth: 2, cursor: onBarClick ? 'pointer' : 'default' }}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   )
