@@ -64,7 +64,7 @@ export function ForceResyncButton() {
         </p>
       )}
       <p className="text-[12px] text-gray-400 font-medium mt-2 max-w-sm leading-relaxed">
-        Deletes all transactions and re-downloads your full history from Plaid. Use this to fix stuck pending labels, duplicates, or missing refunds.
+        Resets the sync pointer and re-downloads history from Plaid. Your existing transactions are preserved and updated via upsert.
       </p>
     </div>
   )

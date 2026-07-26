@@ -1,6 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
 import { syncTransactions } from '@/lib/services/plaid';
-import { clearTransactionCache } from '@/lib/services/transactions';
 import { NextResponse } from 'next/server';
 
 export const maxDuration = 60; // Allow up to 60s for full historical sync
@@ -16,7 +15,6 @@ export async function POST() {
 
     console.log('[Plaid Sync] Starting sync for user:', user.id);
     await syncTransactions(supabase, user.id);
-    clearTransactionCache();
     console.log('[Plaid Sync] Sync complete');
     return NextResponse.json({ success: true });
   } catch (error: any) {

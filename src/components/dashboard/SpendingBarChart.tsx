@@ -9,24 +9,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { CATEGORY_COLORS } from '@/lib/constants'
 
 interface SpendingBarChartProps {
   data: any[]
   onBarClick?: (data: { start: string, end: string, originalData: any }) => void
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  'Groceries': '#10b981',      // Green
-  'Food & Drink': '#f59e0b',   // Amber
-  'Food & Drinks': '#f59e0b',  // Amber (match edge function)
-  'Transportation': '#3b82f6', // Blue
-  'Shopping': '#ef4444',       // Red
-  'Entertainment': '#8b5cf6',  // Purple
-  'Services': '#06b6d4',       // Cyan
-  'Health': '#ec4899',         // Pink
-  'Travel': '#f97316',         // Orange
-  'Other': '#64748b',          // Slate
-  'General': '#94a3b8',        // Gray
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {

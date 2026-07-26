@@ -25,7 +25,7 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
   const [errorMsg, setErrorMsg] = useState('')
 
   const handleSave = async () => {
-    if (!editCategory || !editAmount || isNaN(Number(editAmount))) return
+    if (!editCategory || !editAmount || isNaN(Number(editAmount)) || Number(editAmount) <= 0) return
     
     startTransition(async () => {
       setErrorMsg('')
@@ -69,7 +69,7 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
       <div className="space-y-6">
         {budgets.map(budget => {
           const spent = categorySpending.find(c => c.name === budget.category)?.value || 0;
-          const percentage = Math.min((spent / budget.amount) * 100, 100);
+          const percentage = budget.amount > 0 ? Math.min((spent / budget.amount) * 100, 100) : 0;
           const isOver = spent > budget.amount;
           
           return (
@@ -98,7 +98,7 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
               </div>
               <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all duration-500 ${isOver ? 'bg-red-500' : 'bg-black'} ${isPending ? 'opacity-50' : ''}`}
+                  className={`h-full rounded-full transition-all duration-500 ${isOver ? 'bg-red-500' : percentage >= 80 ? 'bg-amber-500' : 'bg-black'} ${isPending ? 'opacity-50' : ''}`}
                   style={{ width: `${percentage}%` }}
                 />
               </div>

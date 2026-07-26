@@ -2,15 +2,20 @@
 
 import { Transaction } from '@/lib/services/transactions'
 import { format } from 'date-fns'
-import { Utensils, ShoppingBag, Car, Zap, CreditCard, Search, ChevronDown } from 'lucide-react'
+import { Utensils, ShoppingBag, ShoppingCart, Car, Zap, CreditCard, Search, ChevronDown, Film, Heart, Plane, Package } from 'lucide-react'
 import { useState, useMemo } from 'react'
 
 const ICON_MAP: Record<string, any> = {
   'Food & Drink': Utensils,
   'Food & Drinks': Utensils,
+  'Groceries': ShoppingCart,
   'Shopping': ShoppingBag,
   'Transportation': Car,
   'Services': Zap,
+  'Entertainment': Film,
+  'Health': Heart,
+  'Travel': Plane,
+  'Other': Package,
   'General': CreditCard,
 }
 
