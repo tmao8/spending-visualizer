@@ -44,16 +44,16 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   }
 
   return (
-    <div className="bg-white">
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
+    <div className="bg-white dark:bg-[#0a0a0a]">
+      <header className="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100 dark:border-white/10">
         <div className="px-6 md:px-8 h-20 flex items-center justify-between">
-          <h1 className="text-2xl font-black tracking-tight text-black">All Transactions</h1>
+          <h1 className="text-2xl font-black tracking-tight text-black dark:text-white">All Transactions</h1>
           <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{totalCount} items</p>
         </div>
       </header>
 
       <main className="px-6 md:px-8 py-12 max-w-4xl">
-        <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-black rounded-3xl border border-gray-100 dark:border-white/10 overflow-hidden shadow-sm">
           <RecentTransactions transactions={transactions} />
         </div>
 

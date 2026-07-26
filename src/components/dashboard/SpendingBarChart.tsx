@@ -23,22 +23,22 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const items = payload.filter((entry: any) => entry.name !== 'amount' && entry.value > 0);
     
     return (
-      <div className="bg-white p-4 rounded-2xl shadow-2xl border border-gray-100 min-w-[200px]">
-        <p className="text-[10px] font-black text-black uppercase tracking-widest mb-3">{fullDateLabel}</p>
+      <div className="bg-white dark:bg-black p-4 rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 min-w-[200px]">
+        <p className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest mb-3">{fullDateLabel}</p>
         <div className="space-y-2 mb-3">
           {items.map((entry: any, index: number) => (
             <div key={index} className="flex justify-between items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                <span className="text-[12px] font-bold text-black/70">{entry.name}</span>
+                <span className="text-[12px] font-bold text-black dark:text-white/70">{entry.name}</span>
               </div>
-              <span className="text-[12px] font-bold text-black">${Number(entry.value).toFixed(2)}</span>
+              <span className="text-[12px] font-bold text-black dark:text-white">${Number(entry.value).toFixed(2)}</span>
             </div>
           ))}
         </div>
-        <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
-          <span className="text-[10px] font-black text-black uppercase tracking-widest">Total</span>
-          <span className="text-sm font-black text-black">${Number(total).toFixed(2)}</span>
+        <div className="pt-3 border-t border-gray-100 dark:border-white/10 flex justify-between items-center">
+          <span className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">Total</span>
+          <span className="text-sm font-black text-black dark:text-white">${Number(total).toFixed(2)}</span>
         </div>
       </div>
     );

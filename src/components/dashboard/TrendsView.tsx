@@ -128,7 +128,7 @@ export function TrendsView({
           <button 
             onClick={() => handleNav(1)}
             disabled={isPending}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-black hover:bg-gray-100 transition-all disabled:opacity-50"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-black dark:text-white hover:bg-gray-100 transition-all disabled:opacity-50"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -141,7 +141,7 @@ export function TrendsView({
               </div>
             ) : (
               <>
-                <p className="text-sm font-bold text-black">
+                <p className="text-sm font-bold text-black dark:text-white">
                   {activeData.dateRange ? (
                     timeframe === 'weekly' 
                       ? `${format(new Date(activeData.dateRange.start.substring(0, 10) + 'T12:00:00'), 'MMM dd')} - ${format(new Date(activeData.dateRange.end.substring(0, 10) + 'T12:00:00'), 'MMM dd, yyyy')}`
@@ -165,7 +165,7 @@ export function TrendsView({
           <button 
             onClick={() => handleNav(-1)}
             disabled={isPending || currentOffset === 0}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-black hover:bg-gray-100 transition-all disabled:opacity-50"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-black dark:text-white hover:bg-gray-100 transition-all disabled:opacity-50"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -181,7 +181,7 @@ export function TrendsView({
                 <span>{filter.card}</span>
                 <button 
                   onClick={() => handleFilter('card', null)}
-                  className="ml-1 p-0.5 hover:bg-white/20 rounded-full transition-colors"
+                  className="ml-1 p-0.5 hover:bg-white dark:bg-black/20 rounded-full transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -194,7 +194,7 @@ export function TrendsView({
                 <span>{filter.category}</span>
                 <button 
                   onClick={() => handleFilter('category', null)}
-                  className="ml-1 p-0.5 hover:bg-white/20 rounded-full transition-colors"
+                  className="ml-1 p-0.5 hover:bg-white dark:bg-black/20 rounded-full transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -206,13 +206,13 @@ export function TrendsView({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-12">
-          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 relative overflow-hidden">
+          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 dark:border-white/10 relative overflow-hidden">
             {isPending && (
               <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px] z-10 flex items-center justify-center" />
             )}
             <div className="mb-8 flex items-start justify-between">
               <div>
-                <h3 className="text-2xl font-black tracking-tight text-black capitalize">
+                <h3 className="text-2xl font-black tracking-tight text-black dark:text-white capitalize">
                   {filter.category || filter.card || timeframe} Spending Trend
                 </h3>
                 <p className="text-gray-400 text-sm font-medium mt-1">
@@ -226,22 +226,22 @@ export function TrendsView({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="bg-white dark:bg-black p-8 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{peakLabel}</p>
-              <p className="text-2xl font-black text-black">
+              <p className="text-2xl font-black text-black dark:text-white">
                 ${Math.max(...activeData.trends.map(d => d.amount), 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="bg-white dark:bg-black p-8 rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Period Spend</p>
-              <p className="text-2xl font-black text-black">
+              <p className="text-2xl font-black text-black dark:text-white">
                 ${totalPeriodSpend.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
           
-          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-gray-100">
+          <div className="bg-white dark:bg-black rounded-3xl border border-gray-100 dark:border-white/10 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-gray-100 dark:border-white/10">
               <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Transactions in Period</h4>
             </div>
             <RecentTransactions transactions={activeData.transactions} />
@@ -249,9 +249,9 @@ export function TrendsView({
         </div>
 
         <div className="space-y-8">
-          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100">
+          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 dark:border-white/10">
             <div className="mb-8">
-              <h3 className="text-xl font-black tracking-tight text-black capitalize">Categories ({timeframe})</h3>
+              <h3 className="text-xl font-black tracking-tight text-black dark:text-white capitalize">Categories ({timeframe})</h3>
             </div>
             <MerchantPieChart 
               data={activeData.categories} 
@@ -264,7 +264,7 @@ export function TrendsView({
             onCardClick={(card) => handleFilter('card', card)}
           />
 
-          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+          <div className="bg-white dark:bg-black rounded-3xl p-8 border border-gray-100 dark:border-white/10 shadow-sm">
             <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Category Breakdown</h4>
             <div className="space-y-4">
               {activeData.categories.map((cat) => (
@@ -273,8 +273,8 @@ export function TrendsView({
                   onClick={() => handleFilter('category', cat.name)}
                   className="w-full flex justify-between items-center group text-left"
                 >
-                  <span className="text-sm font-bold text-black group-hover:opacity-70 transition-opacity">{cat.name}</span>
-                  <span className="text-sm font-medium text-gray-500 group-hover:text-black transition-colors">${cat.value.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-black dark:text-white group-hover:opacity-70 transition-opacity">{cat.name}</span>
+                  <span className="text-sm font-medium text-gray-500 group-hover:text-black dark:text-white transition-colors">${cat.value.toLocaleString()}</span>
                 </button>
               ))}
               {activeData.categories.length === 0 && (

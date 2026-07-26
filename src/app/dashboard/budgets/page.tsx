@@ -29,10 +29,10 @@ export default async function BudgetsPage() {
   const totalFixedCosts = subscriptions.reduce((sum: number, s: any) => sum + s.amount, 0)
 
   return (
-    <div className="bg-white min-h-screen">
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
+    <div className="bg-white dark:bg-[#0a0a0a] min-h-screen">
+      <header className="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100 dark:border-white/10">
         <div className="px-6 md:px-8 h-20 flex items-center justify-between">
-          <h1 className="text-2xl font-black tracking-tight text-black">Budgets & Subscriptions</h1>
+          <h1 className="text-2xl font-black tracking-tight text-black dark:text-white">Budgets & Subscriptions</h1>
         </div>
       </header>
 
@@ -46,7 +46,7 @@ export default async function BudgetsPage() {
                 <Target className="w-5 h-5 text-gray-400" />
               </div>
               <div>
-                <h2 className="text-lg font-black tracking-tight text-black">Monthly Budgets</h2>
+                <h2 className="text-lg font-black tracking-tight text-black dark:text-white">Monthly Budgets</h2>
                 <p className="text-xs font-medium text-gray-400">Track spending against your limits</p>
               </div>
             </div>
@@ -61,12 +61,12 @@ export default async function BudgetsPage() {
                   <RotateCw className="w-5 h-5 text-gray-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black tracking-tight text-black">Fixed Costs</h2>
+                  <h2 className="text-lg font-black tracking-tight text-black dark:text-white">Fixed Costs</h2>
                   <p className="text-xs font-medium text-gray-400">Auto-detected recurring charges</p>
                 </div>
               </div>
               {totalFixedCosts > 0 && (
-                <span className="text-sm font-black text-black">
+                <span className="text-sm font-black text-black dark:text-white">
                   ${totalFixedCosts.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo
                 </span>
               )}

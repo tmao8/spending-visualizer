@@ -65,7 +65,7 @@ export function MerchantPieChart({ data, onCategoryClick }: MerchantPieChartProp
         {data.map((entry, index) => (
           <div key={entry.name} className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getColor(entry.name, index) }} />
-            <span className="text-xs font-medium text-gray-600 truncate max-w-[100px]">{entry.name}</span>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate max-w-[100px]">{entry.name}</span>
           </div>
         ))}
       </div>

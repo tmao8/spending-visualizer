@@ -16,7 +16,7 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
+    <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-white dark:bg-black rounded-3xl border border-gray-100 dark:border-white/10 shadow-sm">
       <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
       <h2 className="text-2xl font-semibold tracking-tight text-gray-900 mb-2">
         Something went wrong

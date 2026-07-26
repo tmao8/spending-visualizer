@@ -25,12 +25,12 @@ export function CardBalances() {
     fetchBalances();
   }, []);
 
-  if (loading) return <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm animate-pulse h-48"></div>;
+  if (loading) return <div className="bg-white dark:bg-black rounded-3xl p-8 border border-gray-100 dark:border-white/10 shadow-sm animate-pulse h-48"></div>;
   
   if (error) {
     return (
-      <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Current Balances</h4>
+      <div className="bg-white dark:bg-black rounded-3xl p-8 border border-gray-100 dark:border-white/10 shadow-sm transition-transform hover:scale-[1.01] duration-300">
+        <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-6">Current Balances</h4>
         <p className="text-sm text-red-500">{error}</p>
       </div>
     );
@@ -38,7 +38,7 @@ export function CardBalances() {
 
   if (balances.length === 0) {
     return (
-      <div className="bg-black text-white rounded-3xl p-8 shadow-sm">
+      <div className="bg-black dark:bg-neutral-900 text-white rounded-3xl p-8 shadow-sm border border-transparent dark:border-white/10 transition-transform hover:scale-[1.01] duration-300">
         <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Current Balances</h4>
         <p className="text-sm font-medium text-gray-400">No balances available</p>
       </div>
@@ -46,13 +46,13 @@ export function CardBalances() {
   }
 
   return (
-    <div className="bg-black text-white rounded-3xl p-8 shadow-sm">
+    <div className="bg-black dark:bg-neutral-900 text-white rounded-3xl p-8 shadow-sm border border-transparent dark:border-white/10 transition-transform hover:scale-[1.01] duration-300">
       <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Current Balances</h4>
       <div className="space-y-6">
         {balances.map((acc, i) => (
           <div key={i} className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-gray-800 dark:bg-black flex items-center justify-center">
                 <Wallet className="w-4 h-4 text-gray-300" />
               </div>
               <span className="text-sm font-bold">{acc.name}</span>

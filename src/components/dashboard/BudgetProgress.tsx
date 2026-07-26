@@ -50,7 +50,7 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
   }
 
   return (
-    <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm relative">
+    <div className="bg-white dark:bg-black rounded-3xl p-8 border border-gray-100 dark:border-white/10 shadow-sm relative">
       <div className="flex items-center justify-between mb-6">
         <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Monthly Budgets</h4>
         <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
             <div key={budget.category} className="group relative">
               <div className="flex justify-between items-end mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-black">{budget.category}</span>
+                  <span className="text-sm font-bold text-black dark:text-white">{budget.category}</span>
                   {isEditing && (
                     <button 
                       onClick={() => handleDelete(budget.category)}
@@ -112,8 +112,8 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
       </div>
 
       {isEditing && (
-        <div className="mt-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
-          <h5 className="text-xs font-bold text-black uppercase tracking-widest mb-3">Add / Update Budget</h5>
+        <div className="mt-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 dark:border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
+          <h5 className="text-xs font-bold text-black dark:text-white uppercase tracking-widest mb-3">Add / Update Budget</h5>
           
           {errorMsg && (
             <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-100">
@@ -125,7 +125,7 @@ export function BudgetProgress({ budgets, categorySpending }: BudgetProgressProp
             <select
               value={editCategory}
               onChange={e => setEditCategory(e.target.value)}
-              className="w-full px-4 py-2 rounded-xl text-sm font-medium border-none outline-none focus:ring-2 focus:ring-black/5 bg-white"
+              className="w-full px-4 py-2 rounded-xl text-sm font-medium border-none outline-none focus:ring-2 focus:ring-black/5 bg-white dark:bg-black"
             >
               <option value="" disabled>Select Category...</option>
               {STATIC_CATEGORIES.map(cat => (

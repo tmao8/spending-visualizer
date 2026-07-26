@@ -49,9 +49,9 @@ async function TrendsContent({ searchParams }: { searchParams: Promise<any> }) {
 
   return (
     <>
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
+      <header className="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100 dark:border-white/10">
         <div className="px-6 md:px-8 h-20 flex items-center justify-between">
-          <h1 className="text-2xl font-black tracking-tight text-black">Spending Trends</h1>
+          <h1 className="text-2xl font-black tracking-tight text-black dark:text-white">Spending Trends</h1>
         </div>
       </header>
 
@@ -73,7 +73,7 @@ interface PageProps {
 
 export default function TrendsPage({ searchParams }: PageProps) {
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] pb-20">
       <Suspense fallback={<TrendsLoadingSkeleton />}>
         <TrendsContent searchParams={searchParams} />
       </Suspense>
@@ -86,22 +86,22 @@ function TrendsLoadingSkeleton() {
     <div className="space-y-12">
       <div className="flex items-center justify-center p-1 bg-gray-100 rounded-2xl w-fit mx-auto">
         <div className="w-24 h-8 bg-gray-200 rounded-xl mx-1 animate-pulse" />
-        <div className="w-24 h-8 bg-white rounded-xl mx-1 shadow-sm" />
+        <div className="w-24 h-8 bg-white dark:bg-black rounded-xl mx-1 shadow-sm" />
         <div className="w-24 h-8 bg-gray-200 rounded-xl mx-1 animate-pulse" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-12">
-          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 h-[450px] animate-pulse" />
+          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 dark:border-white/10 h-[450px] animate-pulse" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white h-32 rounded-3xl border border-gray-100 animate-pulse" />
-            <div className="bg-white h-32 rounded-3xl border border-gray-100 animate-pulse" />
-            <div className="bg-white h-32 rounded-3xl border border-gray-100 animate-pulse" />
+            <div className="bg-white dark:bg-black h-32 rounded-3xl border border-gray-100 dark:border-white/10 animate-pulse" />
+            <div className="bg-white dark:bg-black h-32 rounded-3xl border border-gray-100 dark:border-white/10 animate-pulse" />
+            <div className="bg-white dark:bg-black h-32 rounded-3xl border border-gray-100 dark:border-white/10 animate-pulse" />
           </div>
         </div>
         <div className="space-y-8">
-          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 h-[350px] animate-pulse" />
-          <div className="bg-white h-64 rounded-3xl border border-gray-100 animate-pulse" />
+          <div className="bg-gray-50/50 rounded-3xl p-10 border border-gray-100 dark:border-white/10 h-[350px] animate-pulse" />
+          <div className="bg-white dark:bg-black h-64 rounded-3xl border border-gray-100 dark:border-white/10 animate-pulse" />
         </div>
       </div>
     </div>

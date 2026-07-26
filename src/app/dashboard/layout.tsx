@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/dashboard/Sidebar'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
       <PlaidSyncManager />
       <Sidebar />
 

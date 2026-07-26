@@ -37,10 +37,10 @@ export default async function PaymentsPage() {
   const totalMinPayment = liabilities.reduce((sum, card) => sum + (card.minimumPayment || 0), 0)
 
   return (
-    <div className="bg-white min-h-screen">
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100">
+    <div className="bg-white dark:bg-[#0a0a0a] min-h-screen">
+      <header className="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-10 border-b border-gray-100 dark:border-white/10">
         <div className="px-6 md:px-8 h-20 flex items-center">
-          <h1 className="text-2xl font-black tracking-tight text-black">Payments</h1>
+          <h1 className="text-2xl font-black tracking-tight text-black dark:text-white">Payments</h1>
         </div>
       </header>
 
@@ -48,7 +48,7 @@ export default async function PaymentsPage() {
         {liabilities.length === 0 ? (
           <div className="text-center py-20">
             <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-lg font-black text-black mb-2">No credit card liabilities found</h2>
+            <h2 className="text-lg font-black text-black dark:text-white mb-2">No credit card liabilities found</h2>
             <p className="text-sm text-gray-400 font-medium max-w-md mx-auto">
               {error ? `Plaid Status: ${error}` : 'No credit card account data was returned by your linked bank accounts.'}
             </p>
@@ -59,15 +59,15 @@ export default async function PaymentsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
               <div className="bg-gray-50 rounded-2xl p-6">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Owed</p>
-                <p className="text-2xl font-black text-black">${totalOwed.toFixed(2)}</p>
+                <p className="text-2xl font-black text-black dark:text-white">${totalOwed.toFixed(2)}</p>
               </div>
               <div className="bg-gray-50 rounded-2xl p-6">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Statement Balance</p>
-                <p className="text-2xl font-black text-black">${totalStatementBalance.toFixed(2)}</p>
+                <p className="text-2xl font-black text-black dark:text-white">${totalStatementBalance.toFixed(2)}</p>
               </div>
               <div className="bg-gray-50 rounded-2xl p-6">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Min Payment Due</p>
-                <p className="text-2xl font-black text-black">${totalMinPayment.toFixed(2)}</p>
+                <p className="text-2xl font-black text-black dark:text-white">${totalMinPayment.toFixed(2)}</p>
               </div>
             </div>
 
@@ -86,7 +86,7 @@ export default async function PaymentsPage() {
                           <CreditCard className={`w-5 h-5 ${status.urgent ? 'text-amber-500' : 'text-gray-400'}`} />
                         </div>
                         <div>
-                          <h3 className="text-sm font-black text-black">{card.accountName}</h3>
+                          <h3 className="text-sm font-black text-black dark:text-white">{card.accountName}</h3>
                           {card.creditLimit && (
                             <p className="text-[11px] text-gray-400 font-medium">
                               ${card.creditLimit.toLocaleString()} limit
@@ -103,23 +103,23 @@ export default async function PaymentsPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                       <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Current Balance</p>
-                        <p className="text-lg font-black text-black">${card.currentBalance.toFixed(2)}</p>
+                        <p className="text-lg font-black text-black dark:text-white">${card.currentBalance.toFixed(2)}</p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Statement Bal.</p>
-                        <p className="text-lg font-black text-black">
+                        <p className="text-lg font-black text-black dark:text-white">
                           {card.lastStatementBalance != null ? `$${card.lastStatementBalance.toFixed(2)}` : '—'}
                         </p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Min. Payment</p>
-                        <p className="text-lg font-black text-black">
+                        <p className="text-lg font-black text-black dark:text-white">
                           {card.minimumPayment != null ? `$${card.minimumPayment.toFixed(2)}` : '—'}
                         </p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Due Date</p>
-                        <p className="text-lg font-black text-black">
+                        <p className="text-lg font-black text-black dark:text-white">
                           {card.nextPaymentDueDate ? format(new Date(card.nextPaymentDueDate + 'T00:00:00'), 'MMM dd') : '—'}
                         </p>
                       </div>
