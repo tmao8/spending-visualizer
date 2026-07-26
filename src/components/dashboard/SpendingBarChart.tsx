@@ -61,7 +61,7 @@ export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart 
           data={data} 
-          margin={{ top: 0, right: -15, left: -20, bottom: 0 }}
+          margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
           onClick={(state) => {
             if (state && state.activePayload && state.activePayload.length > 0 && onBarClick) {
               const payload = state.activePayload[0].payload;
@@ -75,18 +75,18 @@ export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
             }
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-          <XAxis 
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.05} />
+          <XAxis className="text-gray-400 dark:text-gray-500" 
             dataKey="date" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }}
+            tick={{ fontSize: 10, fontWeight: 700, fill: 'currentColor', opacity: 0.4 }}
             minTickGap={10}
           />
-          <YAxis 
+          <YAxis className="text-gray-400 dark:text-gray-500" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 10, fontWeight: 700, fill: '#9ca3af' }}
+            tick={{ fontSize: 10, fontWeight: 700, fill: 'currentColor', opacity: 0.4 }}
             tickFormatter={(value) => `$${value}`}
           />
           <Tooltip 
@@ -99,11 +99,10 @@ export function SpendingBarChart({ data, onBarClick }: SpendingBarChartProps) {
               dataKey={cat} 
               stackId="a" 
               fill={CATEGORY_COLORS[cat] || 'transparent'} 
-              radius={[4, 4, 4, 4]}
-              stroke="#ffffff"
-              strokeWidth={2}
+              radius={[4, 4, 4, 4]} stroke="transparent" strokeWidth={1}
+              
               cursor={onBarClick ? 'pointer' : 'default'}
-              activeBar={{ stroke: '#000000', strokeWidth: 2 }}
+              activeBar={{ fillOpacity: 0.8 }}
             />
           ))}
         </BarChart>

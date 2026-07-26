@@ -5,6 +5,15 @@ import { Sparkles, RefreshCw } from 'lucide-react'
 import { generateFinancialRoast } from '@/app/dashboard/actions/ai'
 
 export function AIRoastWidget() {
+  const renderFormattedText = (text: string) => {
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={index} className="font-black text-indigo-950 dark:text-indigo-50">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
   const [roast, setRoast] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -40,7 +49,7 @@ export function AIRoastWidget() {
       <div className="text-sm font-medium text-indigo-900/80 dark:text-indigo-200/80 leading-relaxed space-y-4">
         {roast ? (
           roast.split('\n').filter(p => p.trim() !== '').map((paragraph, i) => (
-            <p key={i}>{paragraph}</p>
+            <p key={i}>{renderFormattedText(paragraph)}</p>
           ))
         ) : (
           <p>Click "Roast Me" to let our AI analyze your recent spending. Warning: It holds nothing back.</p>

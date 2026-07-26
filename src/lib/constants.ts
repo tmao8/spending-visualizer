@@ -1,15 +1,15 @@
 export const CATEGORY_COLORS: Record<string, string> = {
-  'Groceries': '#10b981',
-  'Food & Drink': '#f59e0b',
-  'Food & Drinks': '#f59e0b',
-  'Transportation': '#3b82f6',
-  'Shopping': '#ef4444',
-  'Entertainment': '#8b5cf6',
-  'Services': '#06b6d4',
-  'Health': '#ec4899',
-  'Travel': '#f97316',
-  'Other': '#64748b',
-  'General': '#94a3b8',
+  'Groceries': '#00C896', // Vibrant Emerald
+  'Food & Drink': '#FF9F1C', // Warm Orange
+  'Food & Drinks': '#FF9F1C',
+  'Transportation': '#3A86FF', // Bright Blue
+  'Shopping': '#FF006E', // Electric Pink
+  'Entertainment': '#8338EC', // Deep Purple
+  'Services': '#00B4D8', // Cyan
+  'Health': '#FF6B6B', // Soft Red
+  'Travel': '#F4A261', // Peach
+  'Other': '#7A7A7A', // Neutral Gray
+  'General': '#A0A0A0', // Light Gray
 }
 
-export const DEFAULT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+export const DEFAULT_COLORS = ['#3A86FF', '#00C896', '#FF9F1C', '#FF006E', '#8338EC']
