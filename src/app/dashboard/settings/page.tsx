@@ -1,10 +1,11 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { PlaidConnect } from '@/components/dashboard/PlaidConnect'
-import { LogOut, Unplug } from 'lucide-react'
+import { LogOut, Unplug, Building2 } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { ForceResyncButton } from '@/components/dashboard/ForceResyncButton'
-import { disconnectPlaid } from './actions'
+import { disconnectPlaid, disconnectSpecificPlaid } from './actions'
+import { getConnectionsSummary } from '@/lib/services/plaid'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +16,8 @@ export default async function SettingsPage() {
   if (!user) {
     return redirect('/login')
   }
+
+  const connections = await getConnectionsSummary(supabase, user.id)
 
   return (
     <div className="bg-white dark:bg-[#0a0a0a] min-h-screen">
@@ -29,13 +32,40 @@ export default async function SettingsPage() {
         <section className="bg-white dark:bg-black rounded-3xl border border-gray-100 dark:border-white/10 p-10 shadow-sm">
           <h2 className="text-xl font-black tracking-tight text-black dark:text-white mb-2">Connected Banks</h2>
           <p className="text-sm font-medium text-gray-500 mb-8">Link your financial institutions via Plaid to automatically sync transactions securely.</p>
+          
+          {connections.length > 0 && (
+            <div className="mb-8 space-y-3">
+              {connections.map((conn) => (
+                <div key={conn.id} className="flex items-center justify-between p-4 rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white dark:bg-black border border-gray-100 dark:border-white/10 flex items-center justify-center">
+                      <Building2 className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-black dark:text-white">{conn.institutionName}</p>
+                      <p className="text-xs font-medium text-gray-500">Connected</p>
+                    </div>
+                  </div>
+                  <form action={disconnectSpecificPlaid}>
+                    <input type="hidden" name="connectionId" value={conn.id} />
+                    <button className="p-2 rounded-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Disconnect this bank">
+                      <Unplug className="w-4 h-4" />
+                    </button>
+                  </form>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center gap-4">
             <PlaidConnect />
-            <form action={disconnectPlaid}>
-              <button className="px-6 py-3 rounded-full bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors flex items-center gap-2">
-                <Unplug className="w-4 h-4" /> Disconnect Plaid
-              </button>
-            </form>
+            {connections.length > 0 && (
+              <form action={disconnectPlaid}>
+                <button className="px-6 py-3 rounded-full bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors flex items-center gap-2">
+                  <Unplug className="w-4 h-4" /> Disconnect All
+                </button>
+              </form>
+            )}
           </div>
         </section>
 

@@ -347,3 +347,72 @@ export const removeUserConnections = async (supabase: SupabaseClient, userId: st
   
   return { success: true, removedCount };
 };
+
+export const getConnectionsSummary = async (supabase: SupabaseClient, userId: string) => {
+  const { data: connections } = await supabase
+    .from('plaid_connections')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (!connections || connections.length === 0) return [];
+
+  const summaries = await Promise.all(connections.map(async (connection) => {
+    try {
+      const itemResponse = await plaidClient.itemGet({ access_token: connection.access_token });
+      const institutionId = itemResponse.data.item.institution_id;
+      let institutionName = 'Unknown Institution';
+      if (institutionId) {
+        const instResponse = await plaidClient.institutionsGetById({
+          institution_id: institutionId,
+          country_codes: ['US'] as any,
+        });
+        institutionName = instResponse.data.institution.name;
+      }
+      
+      return {
+        id: connection.id,
+        institutionName,
+      };
+    } catch (e) {
+      console.error('Error fetching connection summary:', e);
+      return {
+        id: connection.id,
+        institutionName: 'Unknown Bank (Error)',
+      };
+    }
+  }));
+
+  return summaries;
+};
+
+export const removeSingleConnection = async (supabase: SupabaseClient, userId: string, connectionId: string) => {
+  const { data: connection, error } = await supabase
+    .from('plaid_connections')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('id', connectionId)
+    .single();
+
+  if (error || !connection) {
+    return { success: false, message: 'Connection not found' };
+  }
+
+  try {
+    await plaidClient.itemRemove({
+      access_token: connection.access_token,
+    });
+  } catch (e: any) {
+    console.error('Error removing item from Plaid:', e?.response?.data || e.message);
+  }
+
+  const { error: delError } = await supabase
+    .from('plaid_connections')
+    .delete()
+    .eq('id', connection.id);
+    
+  if (delError) {
+    return { success: false, message: delError.message };
+  }
+  
+  return { success: true };
+};

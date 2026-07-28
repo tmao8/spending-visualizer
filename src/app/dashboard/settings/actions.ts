@@ -2,7 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { removeUserConnections } from '@/lib/services/plaid'
+import { removeUserConnections, removeSingleConnection } from '@/lib/services/plaid'
 
 export async function forceResync(): Promise<{ success: boolean; message: string }> {
   const supabase = await createClient()
@@ -33,6 +33,22 @@ export async function disconnectPlaid(formData: FormData): Promise<void> {
   if (!user) return
 
   const result = await removeUserConnections(supabase, user.id)
+  
+  if (result.success) {
+    revalidatePath('/dashboard', 'layout')
+  }
+}
+
+export async function disconnectSpecificPlaid(formData: FormData): Promise<void> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const connectionId = formData.get('connectionId') as string
+  if (!connectionId) return
+
+  const result = await removeSingleConnection(supabase, user.id, connectionId)
   
   if (result.success) {
     revalidatePath('/dashboard', 'layout')
