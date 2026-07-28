@@ -1,9 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { PlaidConnect } from '@/components/dashboard/PlaidConnect'
-import { LogOut } from 'lucide-react'
+import { LogOut, Unplug } from 'lucide-react'
 import { signOut } from '@/app/login/actions'
 import { ForceResyncButton } from '@/components/dashboard/ForceResyncButton'
+import { disconnectPlaid } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +31,11 @@ export default async function SettingsPage() {
           <p className="text-sm font-medium text-gray-500 mb-8">Link your financial institutions via Plaid to automatically sync transactions securely.</p>
           <div className="flex items-center gap-4">
             <PlaidConnect />
+            <form action={disconnectPlaid}>
+              <button className="px-6 py-3 rounded-full bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors flex items-center gap-2">
+                <Unplug className="w-4 h-4" /> Disconnect Plaid
+              </button>
+            </form>
           </div>
         </section>
 

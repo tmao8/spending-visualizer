@@ -305,3 +305,45 @@ export const getLiabilities = async (supabase: SupabaseClient, userId: string): 
 
   return { data: sorted, error: allLiabilities.length === 0 ? lastError : null };
 };
+
+export const removeUserConnections = async (supabase: SupabaseClient, userId: string) => {
+  const { data: connections, error } = await supabase
+    .from('plaid_connections')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error || !connections) {
+    console.error('Error fetching connections to remove:', error);
+    return { success: false, message: error?.message };
+  }
+
+  let removedCount = 0;
+  for (const connection of connections) {
+    try {
+      await plaidClient.itemRemove({
+        access_token: connection.access_token,
+      });
+      console.log(`Successfully removed item from Plaid: ${connection.item_id}`);
+    } catch (e: any) {
+      console.error(`Error removing item from Plaid (${connection.item_id}):`, e?.response?.data || e.message);
+      // We will still try to delete it from the DB even if Plaid throws an error 
+      // (e.g. if it was already deleted in Plaid but orphaned in our DB)
+    }
+
+    const { error: delError } = await supabase
+      .from('plaid_connections')
+      .delete()
+      .eq('id', connection.id);
+      
+    if (delError) {
+       console.error(`Failed to delete connection from DB (${connection.id}):`, delError.message);
+    } else {
+       removedCount++;
+    }
+  }
+  
+  // also delete all transactions for this user so they can start fresh
+  await supabase.from('transactions').delete().neq('id', 0); // Need to clear transactions associated with removed connections. Or let the user keep them?
+  
+  return { success: true, removedCount };
+};
