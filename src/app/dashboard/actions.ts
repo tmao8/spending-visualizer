@@ -59,6 +59,30 @@ export async function saveBudget(category: string, amount: number) {
   }
 }
 
+export async function saveBudgetsBulk(budgets: { category: string; amount: number }[]) {
+  const supabase = await createClient()
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const toUpsert = budgets.map(b => ({
+      user_id: user.id,
+      category: b.category,
+      amount: b.amount
+    }))
+
+    const { error } = await supabase
+      .from('budgets')
+      .upsert(toUpsert, { onConflict: 'user_id, category' })
+    if (error) throw error
+    revalidatePath('/dashboard')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error saving budgets:', error)
+    return { error: error.message || 'Failed to save budgets' }
+  }
+}
+
 export async function deleteBudget(category: string) {
   const supabase = await createClient()
   try {
