@@ -44,9 +44,12 @@ export async function createManualTransaction(formData: FormData) {
 export async function saveBudget(category: string, amount: number) {
   const supabase = await createClient()
   try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
     const { error } = await supabase
       .from('budgets')
-      .upsert({ category, amount }, { onConflict: 'category' })
+      .upsert({ user_id: user.id, category, amount }, { onConflict: 'user_id, category' })
     if (error) throw error
     revalidatePath('/dashboard')
     return { success: true }
@@ -59,9 +62,13 @@ export async function saveBudget(category: string, amount: number) {
 export async function deleteBudget(category: string) {
   const supabase = await createClient()
   try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
     const { error } = await supabase
       .from('budgets')
       .delete()
+      .eq('user_id', user.id)
       .eq('category', category)
     if (error) throw error
     revalidatePath('/dashboard')

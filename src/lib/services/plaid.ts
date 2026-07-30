@@ -171,6 +171,7 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
           const category = mapPlaidCategory(t.personal_finance_category?.primary);
           
           return {
+            user_id: userId,
             plaid_transaction_id: t.transaction_id,
             merchant: merchant,
             amount: t.amount,
