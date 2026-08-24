@@ -158,12 +158,22 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
         const allTransactions = [...added, ...modified];
         const toUpsert = allTransactions
           .filter(t => {
-            const isExcludedCategory = EXCLUDED_CATEGORIES.includes(t.personal_finance_category?.primary || '');
+            const primaryCategory = t.personal_finance_category?.primary || '';
+            const name = (t.merchant_name || t.name || '').toLowerCase();
             
-            if (isExcludedCategory) {
-              console.log(`[Plaid Sync] Filtered out: "${t.merchant_name || t.name}" amount=${t.amount} category=${t.personal_finance_category?.primary} pending=${t.pending}`);
+            // Exclude if explicitly categorized as a loan payment
+            const isExcludedCategory = EXCLUDED_CATEGORIES.includes(primaryCategory);
+            // Exclude if it's a transfer in/out and explicitly labeled as a payment (e.g. Robinhood payments)
+            const isTransferPayment = (primaryCategory === 'TRANSFER_IN' || primaryCategory === 'TRANSFER_OUT') && name.includes('payment');
+            // Exclude negative amounts (credits to card) that are explicitly labeled as payments
+            const isCreditCardPayment = t.amount < 0 && name.includes('payment');
+
+            const shouldExclude = isExcludedCategory || isTransferPayment || isCreditCardPayment;
+            
+            if (shouldExclude) {
+              console.log(`[Plaid Sync] Filtered out: "${t.merchant_name || t.name}" amount=${t.amount} category=${primaryCategory} pending=${t.pending}`);
             }
-            return !isExcludedCategory;
+            return !shouldExclude;
           })
           .map(t => {
           const merchant = t.merchant_name || t.name || 'Unknown';
