@@ -39,12 +39,12 @@ export default async function DashboardPage() {
 
   // Fetch data in parallel
   const [monthlyTotal, dailySpending, categorySpending, recentTransactions, cardSpending, historicalAverage] = await Promise.all([
-    getMonthlyTotal(supabase),
-    getDailySpending(supabase, 30, 0, undefined, 5, 'day'),
-    getSpendingByCategory(supabase, undefined, startDate, endDate),
-    getRecentTransactions(supabase),
-    getSpendingByCard(supabase, undefined, startDate, endDate),
-    getHistoricalMonthlyAverage(supabase)
+    getMonthlyTotal(supabase, user.id),
+    getDailySpending(supabase, 30, 0, undefined, 5, 'day', undefined, undefined, user.id),
+    getSpendingByCategory(supabase, undefined, startDate, endDate, user.id),
+    getRecentTransactions(supabase, 10, user.id),
+    getSpendingByCard(supabase, undefined, startDate, endDate, user.id),
+    getHistoricalMonthlyAverage(supabase, user.id)
   ])
 
   // Compute insight inline

@@ -18,6 +18,7 @@ export async function generateFinancialRoast() {
     const { data: transactions } = await supabase
       .from('transactions')
       .select('merchant, amount, category, created_at')
+      .eq('user_id', user.id)
       .gte('created_at', startDate)
       .limit(500)
 

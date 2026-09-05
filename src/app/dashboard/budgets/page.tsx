@@ -21,9 +21,9 @@ export default async function BudgetsPage() {
   const endDate = endOfMonth(new Date()).toISOString()
 
   const [budgets, subscriptions, categorySpending] = await Promise.all([
-    getBudgets(supabase),
-    getSubscriptions(supabase),
-    getSpendingByCategory(supabase, undefined, startDate, endDate),
+    getBudgets(supabase, user.id),
+    getSubscriptions(supabase, user.id),
+    getSpendingByCategory(supabase, undefined, startDate, endDate, user.id),
   ])
 
   const totalFixedCosts = subscriptions.reduce((sum: number, s: any) => sum + s.amount, 0)

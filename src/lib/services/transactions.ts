@@ -31,6 +31,9 @@ export interface Transaction {
   card: string
   category: string
   pending?: boolean
+  plaid_transaction_id?: string
+  plaid_account_id?: string
+  user_id?: string
 }
 
 export interface FilterOptions {
@@ -64,11 +67,14 @@ export function categorizeMerchant(merchant: string): string {
   return 'General'
 }
 
-export async function getSpendingByCategory(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string) {
+export async function getSpendingByCategory(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string, userId?: string) {
   let query = supabase
     .from('transactions')
     .select('category, amount, merchant, card')
 
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
   if (startDate) {
     query = query.gte('created_at', startDate)
   }
@@ -99,11 +105,14 @@ export async function getSpendingByCategory(supabase: SupabaseClient, filter?: F
     .sort((a, b) => b.value - a.value)
 }
 
-export async function getSpendingByCard(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string) {
+export async function getSpendingByCard(supabase: SupabaseClient, filter?: FilterOptions, startDate?: string, endDate?: string, userId?: string) {
   let query = supabase
     .from('transactions')
     .select('card, amount, category, merchant')
 
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
   if (startDate) {
     query = query.gte('created_at', startDate)
   }
@@ -135,23 +144,29 @@ export async function getSpendingByCard(supabase: SupabaseClient, filter?: Filte
     .sort((a, b) => b.value - a.value)
 }
 
-export async function getMonthlyTotal(supabase: SupabaseClient) {
+export async function getMonthlyTotal(supabase: SupabaseClient, userId?: string) {
   // Use a rolling 30-day window to match the "Last 30 Days" dashboard label
   const start = startOfDay(subDays(new Date(), 29)).toISOString()
   const end = endOfDay(new Date()).toISOString()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('transactions')
     .select('amount')
     .gte('created_at', start)
     .lte('created_at', end)
+
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
 
   return data.reduce((sum, t) => sum + Number(t.amount), 0)
 }
 
-export async function getDailySpending(supabase: SupabaseClient, days: number = 30, weekOffset: number = 0, filter?: FilterOptions, groupDays: number = 1, alignment: 'day' | 'week' = 'day', exactStart?: string, exactEnd?: string) {
+export async function getDailySpending(supabase: SupabaseClient, days: number = 30, weekOffset: number = 0, filter?: FilterOptions, groupDays: number = 1, alignment: 'day' | 'week' = 'day', exactStart?: string, exactEnd?: string, userId?: string) {
   let startDateObj = new Date();
   let endDateObj = new Date();
 
@@ -174,6 +189,9 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
     .lte('created_at', endDate)
     .order('created_at', { ascending: true })
 
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
   if (filter?.card) {
     query = query.eq('card', filter.card)
   }
@@ -247,12 +265,15 @@ export async function getDailySpending(supabase: SupabaseClient, days: number = 
   return groups
 }
 
-export async function getCategorySpendingForRange(supabase: SupabaseClient, startDate: string, endDate?: string, filter?: FilterOptions) {
+export async function getCategorySpendingForRange(supabase: SupabaseClient, startDate: string, endDate?: string, filter?: FilterOptions, userId?: string) {
   let query = supabase
     .from('transactions')
     .select('merchant, amount, category, card')
     .gte('created_at', startDate)
 
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
   if (endDate) {
     query = query.lte('created_at', endDate)
   }
@@ -281,19 +302,24 @@ export async function getCategorySpendingForRange(supabase: SupabaseClient, star
     .sort((a, b) => b.value - a.value)
 }
 
-export async function getFirstTransactionDate(supabase: SupabaseClient) {
-  const { data, error } = await supabase
+export async function getFirstTransactionDate(supabase: SupabaseClient, userId?: string) {
+  let query = supabase
     .from('transactions')
     .select('created_at')
     .order('created_at', { ascending: true })
     .limit(1)
-    .single()
+
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
+
+  const { data, error } = await query.single()
 
   if (error && error.code !== 'PGRST116') throw error
   return data?.created_at ? new Date(data.created_at) : new Date()
 }
 
-export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: number = 0, filter?: FilterOptions, exactStart?: string, exactEnd?: string) {
+export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: number = 0, filter?: FilterOptions, exactStart?: string, exactEnd?: string, userId?: string) {
   let startDate = exactStart ? startOfDay(new Date(exactStart)).toISOString() : '';
   let endDate = exactEnd ? endOfDay(new Date(exactEnd)).toISOString() : '';
 
@@ -304,15 +330,15 @@ export async function getWeeklySpending(supabase: SupabaseClient, weekOffset: nu
   }
 
   const [trends, categories, firstDate, transactions] = await Promise.all([
-    getDailySpending(supabase, 7, weekOffset, filter, 1, 'week', exactStart, exactEnd),
-    getCategorySpendingForRange(supabase, startDate, endDate, filter),
-    getFirstTransactionDate(supabase),
-    getTransactionsForRange(supabase, startDate, endDate, filter)
+    getDailySpending(supabase, 7, weekOffset, filter, 1, 'week', exactStart, exactEnd, userId),
+    getCategorySpendingForRange(supabase, startDate, endDate, filter, userId),
+    getFirstTransactionDate(supabase, userId),
+    getTransactionsForRange(supabase, startDate, endDate, filter, userId)
   ])
   return { trends, categories, transactions, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
-export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOffset: number = 0, filter?: FilterOptions, exactStart?: string, exactEnd?: string) {
+export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOffset: number = 0, filter?: FilterOptions, exactStart?: string, exactEnd?: string, userId?: string) {
   let startDate = exactStart ? startOfDay(new Date(exactStart)).toISOString() : '';
   let endDate = exactEnd ? endOfDay(new Date(exactEnd)).toISOString() : '';
   
@@ -329,15 +355,18 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
     .lte('created_at', endDate)
     .order('created_at', { ascending: true })
 
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
   if (filter?.card) {
     query = query.eq('card', filter.card)
   }
 
   const [categories, { data, error }, firstDate, transactions] = await Promise.all([
-    getCategorySpendingForRange(supabase, startDate, endDate, filter),
+    getCategorySpendingForRange(supabase, startDate, endDate, filter, userId),
     query,
-    getFirstTransactionDate(supabase),
-    getTransactionsForRange(supabase, startDate, endDate, filter)
+    getFirstTransactionDate(supabase, userId),
+    getTransactionsForRange(supabase, startDate, endDate, filter, userId)
   ])
 
   if (error) throw error
@@ -381,7 +410,7 @@ export async function getMonthlySpendingTrend(supabase: SupabaseClient, monthOff
   return { trends, categories, transactions, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
-export async function getYearlySpending(supabase: SupabaseClient, yearOffset: number = 0, filter?: FilterOptions) {
+export async function getYearlySpending(supabase: SupabaseClient, yearOffset: number = 0, filter?: FilterOptions, userId?: string) {
   const baseDate = subYears(new Date(), yearOffset)
   const startDate = startOfYear(baseDate).toISOString()
   const endDate = endOfYear(baseDate).toISOString()
@@ -393,15 +422,18 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
     .lte('created_at', endDate)
     .order('created_at', { ascending: true })
 
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
   if (filter?.card) {
     query = query.eq('card', filter.card)
   }
 
   const [categories, { data, error }, firstDate, transactions] = await Promise.all([
-    getCategorySpendingForRange(supabase, startDate, endDate, filter),
+    getCategorySpendingForRange(supabase, startDate, endDate, filter, userId),
     query,
-    getFirstTransactionDate(supabase),
-    getTransactionsForRange(supabase, startDate, endDate, filter)
+    getFirstTransactionDate(supabase, userId),
+    getTransactionsForRange(supabase, startDate, endDate, filter, userId)
   ])
 
   if (error) throw error
@@ -437,7 +469,7 @@ export async function getYearlySpending(supabase: SupabaseClient, yearOffset: nu
   return { trends, categories, transactions, dateRange: { start: startDate, end: endDate }, firstTransactionDate: firstDate.toISOString() }
 }
 
-export async function getTransactionsForRange(supabase: SupabaseClient, startDate: string, endDate: string, filter?: FilterOptions) {
+export async function getTransactionsForRange(supabase: SupabaseClient, startDate: string, endDate: string, filter?: FilterOptions, userId?: string) {
   let query = supabase
     .from('transactions')
     .select('*')
@@ -445,6 +477,9 @@ export async function getTransactionsForRange(supabase: SupabaseClient, startDat
     .lte('created_at', endDate)
     .order('created_at', { ascending: false })
 
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
   if (filter?.card) {
     query = query.eq('card', filter.card)
   }
@@ -468,13 +503,17 @@ export async function getTransactionsPaginated(
   page: number = 1, 
   pageSize: number = 50, 
   search?: string,
-  filter?: FilterOptions
+  filter?: FilterOptions,
+  userId?: string
 ) {
   let query = supabase
     .from('transactions')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
 
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
   if (filter?.card) {
     query = query.eq('card', filter.card)
   }
@@ -506,13 +545,19 @@ export async function getTransactionsPaginated(
   }
 }
 
-export async function getSubscriptions(supabase: SupabaseClient) {
+export async function getSubscriptions(supabase: SupabaseClient, userId?: string) {
   const startDate = subDays(new Date(), 90).toISOString();
-  const { data, error } = await supabase
+  let query = supabase
     .from('transactions')
     .select('merchant, amount, created_at, category')
     .gte('created_at', startDate)
     .gt('amount', 0); // Ignore refunds/payments
+  
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+
+  const { data, error } = await query;
   
   if (error || !data) return [];
   
@@ -538,8 +583,12 @@ export async function getSubscriptions(supabase: SupabaseClient) {
   return subscriptions.sort((a, b) => b.amount - a.amount);
 }
 
-export async function getBudgets(supabase: SupabaseClient) {
-  const { data, error } = await supabase.from('budgets').select('*');
+export async function getBudgets(supabase: SupabaseClient, userId?: string) {
+  let query = supabase.from('budgets').select('*');
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+  const { data, error } = await query;
   if (error || !data) {
     // Return default demo budgets if table doesn't exist yet
     return [
@@ -550,17 +599,23 @@ export async function getBudgets(supabase: SupabaseClient) {
   return data;
 }
 
-export async function getHistoricalMonthlyAverage(supabase: SupabaseClient) {
-  const firstDate = await getFirstTransactionDate(supabase)
+export async function getHistoricalMonthlyAverage(supabase: SupabaseClient, userId?: string) {
+  const firstDate = await getFirstTransactionDate(supabase, userId)
   const now = new Date()
   
   // Calculate months between first transaction and now (minimum 1)
   const monthDiff = (now.getFullYear() - firstDate.getFullYear()) * 12 + (now.getMonth() - firstDate.getMonth()) + 1
   
-  const { data, error } = await supabase
+  let query = supabase
     .from('transactions')
     .select('amount')
     .lt('created_at', startOfMonth(now).toISOString()) // Only count COMPLETED months for the average
+
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
   if (!data || data.length === 0) return null
@@ -569,12 +624,18 @@ export async function getHistoricalMonthlyAverage(supabase: SupabaseClient) {
   return totalHistorical / Math.max(1, monthDiff - 1) // Divide by number of completed months
 }
 
-export async function getRecentTransactions(supabase: SupabaseClient, limit: number = 10) {
-  const { data, error } = await supabase
+export async function getRecentTransactions(supabase: SupabaseClient, limit: number = 10, userId?: string) {
+  let query = supabase
     .from('transactions')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
   
@@ -584,7 +645,10 @@ export async function getRecentTransactions(supabase: SupabaseClient, limit: num
   })) as Transaction[]
 }
 
-export async function addTransaction(supabase: SupabaseClient, transaction: Omit<Transaction, 'id' | 'created_at'> & { created_at?: string }) {
+export async function addTransaction(
+  supabase: SupabaseClient, 
+  transaction: Omit<Transaction, 'id' | 'created_at'> & { created_at?: string; user_id?: string }
+) {
   const { data, error } = await supabase
     .from('transactions')
     .insert([transaction])

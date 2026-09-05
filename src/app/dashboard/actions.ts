@@ -21,10 +21,12 @@ export async function createManualTransaction(formData: FormData) {
 
   try {
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: 'Not authenticated' }
+    }
     
-    // We pass the transaction. Note: if your table has a user_id column, 
-    // you might need to add it here, but you mentioned there isn't one.
     await addTransaction(supabase, {
+      user_id: user.id,
       merchant,
       amount,
       category,

@@ -30,7 +30,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   }
 
   const { transactions, totalCount, totalPages } = await getTransactionsPaginated(
-    supabase, page, PAGE_SIZE, search, filter
+    supabase, page, PAGE_SIZE, search, filter, user.id
   )
 
   // Build URL helper for pagination links
