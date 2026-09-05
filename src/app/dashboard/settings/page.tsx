@@ -35,9 +35,12 @@ export default async function SettingsPage() {
 
         <section className="bg-gray-50 dark:bg-neutral-900 rounded-3xl border border-gray-100 dark:border-white/10 p-10">
           <h2 className="text-xl font-black tracking-tight text-black dark:text-white mb-2">Account</h2>
-          <p className="text-sm font-medium text-gray-500 mb-8">Manage your active session.</p>
+          <p className="text-sm font-medium text-gray-500 mb-2">Manage your active session.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 font-mono mb-8">
+            Signed in as <span className="font-bold text-black dark:text-white">{user.email}</span>
+          </p>
           <form action={signOut}>
-            <button className="px-6 py-3 rounded-full bg-black text-white text-sm font-bold hover:bg-gray-800 transition-colors flex items-center gap-2">
+            <button className="px-6 py-3 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm font-bold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center gap-2">
               <LogOut className="w-4 h-4" /> Sign Out
             </button>
           </form>

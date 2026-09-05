@@ -146,6 +146,7 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
           const { error: delError } = await supabase
             .from('transactions')
             .delete()
+            .eq('user_id', userId)
             .in('plaid_transaction_id', allIdsToRemove);
           if (delError) console.error('[Plaid Sync] Delete error:', delError.message);
           else console.log(`[Plaid Sync] Deleted ${allIdsToRemove.length} replaced/removed transactions`);
@@ -198,7 +199,7 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
         if (toUpsert.length > 0) {
           const { error: upsertError } = await supabase
             .from('transactions')
-            .upsert(toUpsert, { onConflict: 'plaid_transaction_id' });
+            .upsert(toUpsert, { onConflict: 'user_id, plaid_transaction_id' });
           if (upsertError) console.error('[Plaid Sync] Upsert error:', upsertError.message);
         }
 

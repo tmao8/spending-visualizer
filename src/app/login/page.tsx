@@ -19,6 +19,7 @@ function LoginForm() {
             Insightful spending, elegantly visualized.
           </p>
         </div>
+
         <form className="mt-8 space-y-4" action={login}>
           <div className="space-y-2">
             <div>
@@ -27,7 +28,7 @@ function LoginForm() {
                 name="email"
                 type="email"
                 required
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent sm:text-sm bg-gray-50/50 dark:bg-neutral-900/50"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 dark:border-white/10 placeholder-gray-400 text-gray-900 dark:text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent sm:text-sm bg-gray-50/50 dark:bg-neutral-900/50"
                 placeholder="Email address"
               />
             </div>
@@ -37,14 +38,14 @@ function LoginForm() {
                 name="password"
                 type="password"
                 required
-                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent sm:text-sm bg-gray-50/50 dark:bg-neutral-900/50"
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 dark:border-white/10 placeholder-gray-400 text-gray-900 dark:text-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent sm:text-sm bg-gray-50/50 dark:bg-neutral-900/50"
                 placeholder="Password"
               />
             </div>
           </div>
 
           {error && (
-            <div className="text-red-500 text-xs text-center font-medium">
+            <div className="text-red-500 text-xs text-center font-medium bg-red-50 dark:bg-red-950/30 py-2.5 px-3 rounded-xl border border-red-100 dark:border-red-900/30">
               {error}
             </div>
           )}
@@ -52,7 +53,7 @@ function LoginForm() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-black hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-2xl text-white bg-black dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
               Sign in
             </button>
