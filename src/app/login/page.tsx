@@ -1,12 +1,32 @@
 'use client'
 
 import { login, signInWithGoogle } from './actions'
-import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense, useEffect } from 'react'
 
 function LoginForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
+  const code = searchParams.get('code')
+  const type = searchParams.get('type')
+
+  useEffect(() => {
+    // If a PKCE code was passed to /login (e.g. from an invite link)
+    if (code) {
+      const nextParam = type === 'invite' || type === 'recovery' ? '&next=/reset-password' : ''
+      router.push(`/auth/callback?code=${code}${nextParam}`)
+      return
+    }
+
+    // If an implicit token hash is in the URL (e.g. #access_token=...&type=invite)
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash
+      if (hash.includes('type=invite') || hash.includes('type=recovery')) {
+        router.push('/reset-password' + hash)
+      }
+    }
+  }, [code, type, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0a] py-12 px-4 sm:px-6 lg:px-8">

@@ -4,7 +4,9 @@ import { createClient } from '@/utils/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const type = searchParams.get('type')
+  const defaultNext = type === 'invite' || type === 'recovery' ? '/reset-password' : '/dashboard'
+  const next = searchParams.get('next') ?? defaultNext
 
   if (code) {
     const supabase = await createClient()
@@ -20,8 +22,9 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}${next}`)
       }
     }
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
   }
 
-  // Return to login with error if authentication failed
-  return NextResponse.redirect(`${origin}/login?error=Could not authenticate with Google`)
+  // Return to login with error if no code provided
+  return NextResponse.redirect(`${origin}/login?error=Invalid+authentication+link`)
 }
