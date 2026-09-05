@@ -1,30 +1,59 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { type EmailOtpType } from '@supabase/supabase-js'
+import { type CookieOptions, createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const type = searchParams.get('type')
+  const token_hash = searchParams.get('token_hash')
+  const type = searchParams.get('type') as EmailOtpType | null
   const defaultNext = type === 'invite' || type === 'recovery' ? '/reset-password' : '/dashboard'
   const next = searchParams.get('next') ?? defaultNext
 
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-      const isLocalEnv = process.env.NODE_ENV === 'development'
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
-      }
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const isLocalEnv = process.env.NODE_ENV === 'development'
+  const targetOrigin = isLocalEnv ? origin : (forwardedHost ? `https://${forwardedHost}` : origin)
+  const redirectUrl = `${targetOrigin}${next}`
+
+  let response = NextResponse.redirect(redirectUrl)
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
     }
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
+  )
+
+  if (token_hash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      type,
+      token_hash,
+    })
+    if (!error) {
+      return response
+    }
+    return NextResponse.redirect(`${targetOrigin}/login?error=${encodeURIComponent(error.message)}`)
   }
 
-  // Return to login with error if no code provided
-  return NextResponse.redirect(`${origin}/login?error=Invalid+authentication+link`)
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+      return response
+    }
+    return NextResponse.redirect(`${targetOrigin}/login?error=${encodeURIComponent(error.message)}`)
+  }
+
+  // Return to login with error if no code or token provided
+  return NextResponse.redirect(`${targetOrigin}/login?error=Invalid+authentication+link`)
 }
