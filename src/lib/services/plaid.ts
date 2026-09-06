@@ -50,7 +50,7 @@ export const exchangePublicToken = async (supabase: SupabaseClient, publicToken:
 
   if (error) {
     console.error('Error saving plaid connection:', error);
-    throw error;
+    throw new Error(`Failed to save bank connection to database: ${error.message} (Code: ${error.code || 'unknown'})`);
   }
 
   return { success: true };
@@ -102,6 +102,24 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
     let hasMore = true;
     let nextCursor = connection.next_cursor;
     
+    // If a cursor was already stored but the user has 0 transactions in the database,
+    // a previous sync failed to insert. Reset cursor so Plaid re-fetches full history.
+    if (nextCursor) {
+      try {
+        const { count, error: countErr } = await supabase
+          .from('transactions')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+
+        if (!countErr && (count === 0 || count === null)) {
+          console.log(`[Plaid Sync] 0 transactions found for user ${userId} despite cursor. Resetting cursor to pull full history...`);
+          nextCursor = null;
+        }
+      } catch (e) {
+        console.warn('[Plaid Sync] Error checking existing transaction count:', e);
+      }
+    }
+
     // Fetch accounts to map account_id to name for the "card" column
     let accountsMap: Record<string, string> = {};
     try {
@@ -111,8 +129,8 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
       accountsResponse.data.accounts.forEach(acc => {
         accountsMap[acc.account_id] = acc.name;
       });
-    } catch (e) {
-      console.error('Error fetching accounts for mapping:', e);
+    } catch (e: any) {
+      console.error('Error fetching accounts for mapping:', e?.response?.data || e.message);
     }
 
     while (hasMore) {
@@ -197,21 +215,36 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
         console.log(`[Plaid Sync] Upserting ${toUpsert.length} of ${allTransactions.length} transactions (${allTransactions.length - toUpsert.length} filtered)`);
 
         if (toUpsert.length > 0) {
-          const { error: upsertError } = await supabase
+          // Try composite constraint (user_id, plaid_transaction_id) first
+          let { error: upsertError } = await supabase
             .from('transactions')
             .upsert(toUpsert, { onConflict: 'user_id, plaid_transaction_id' });
-          if (upsertError) console.error('[Plaid Sync] Upsert error:', upsertError.message);
+
+          // If composite constraint does not exist in DB, fallback to plaid_transaction_id
+          if (upsertError && (upsertError.message.includes('ON CONFLICT') || upsertError.code === '42P10')) {
+            console.warn('[Plaid Sync] Composite onConflict failed, retrying with plaid_transaction_id...');
+            const retry = await supabase
+              .from('transactions')
+              .upsert(toUpsert, { onConflict: 'plaid_transaction_id' });
+            upsertError = retry.error;
+          }
+
+          if (upsertError) {
+            console.error('[Plaid Sync] Upsert error:', upsertError.message);
+            throw new Error(`Failed to save transactions: ${upsertError.message}`);
+          }
         }
 
-        // Update cursor in db
+        // Only update cursor in db if upsert succeeded
         await supabase
           .from('plaid_connections')
           .update({ next_cursor: nextCursor })
           .eq('id', connection.id);
 
       } catch (err: any) {
-        console.error('[Plaid Sync] Error:', err?.response?.data || err);
+        console.error('[Plaid Sync] Error:', err?.response?.data || err.message || err);
         hasMore = false; // Stop on error
+        throw err;
       }
     }
   }
