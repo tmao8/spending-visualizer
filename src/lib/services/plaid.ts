@@ -172,7 +172,7 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
 
         // Only filter out credit card bill payments — everything else
         // (refunds, credits, rewards, transfers) gets included
-        const EXCLUDED_CATEGORIES = ['LOAN_PAYMENTS'];
+        const EXCLUDED_CATEGORIES = ['LOAN_PAYMENTS', 'INCOME', 'TRANSFER_IN', 'TRANSFER_OUT'];
         
         const allTransactions = [...added, ...modified];
         const toUpsert = allTransactions
@@ -180,14 +180,12 @@ export const syncTransactions = async (supabase: SupabaseClient, userId: string)
             const primaryCategory = t.personal_finance_category?.primary || '';
             const name = (t.merchant_name || t.name || '').toLowerCase();
             
-            // Exclude if explicitly categorized as a loan payment
+            // Exclude if explicitly categorized as a loan payment, income, or transfer
             const isExcludedCategory = EXCLUDED_CATEGORIES.includes(primaryCategory);
-            // Exclude if it's a transfer in/out and explicitly labeled as a payment (e.g. Robinhood payments)
-            const isTransferPayment = (primaryCategory === 'TRANSFER_IN' || primaryCategory === 'TRANSFER_OUT') && name.includes('payment');
             // Exclude negative amounts (credits to card) that are explicitly labeled as payments
             const isCreditCardPayment = t.amount < 0 && name.includes('payment');
 
-            const shouldExclude = isExcludedCategory || isTransferPayment || isCreditCardPayment;
+            const shouldExclude = isExcludedCategory || isCreditCardPayment;
             
             if (shouldExclude) {
               console.log(`[Plaid Sync] Filtered out: "${t.merchant_name || t.name}" amount=${t.amount} category=${primaryCategory} pending=${t.pending}`);
